@@ -1,6 +1,10 @@
 Scratchduino for Android
 ======================
 
+Инструкция по сборке
+======================
+<a href="https://cdn.rawgit.com/scratchduino/forandroid/master/build-instruction/build-instruction.html">Инструкция</a>
+
 
 Ошибки в приложении
 ======================

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <title>ScratchDuino Android</title>
+    </head>
+    <body>
+        <h1 id="инструкция">Инструкция по сборке ScratchDuino для Android</h1>
+        <ol>
+        <li>
+            <p>Запускаем IntelliJ IDEA Ultimate. Создаем новый проект flash. Выбираем все, как на скриншоте. Flex/AIR sdk пока нет, укажем IDEA его местоположение потом.</p>
+            <img src="01.png"></img>
+            <p>Flex/AIR sdk пока нет, укажем IDEA его местоположение потом.</p>
+        </li>
+        <li>
+            <p>Указываем название (любое - отразится лишь на названии проекта, но никак не повлияет на приложение) и путь к исходникам.</p>
+            <img src="02.png"></img>
+        </li>
+        <li>
+            <p>Перейдем в настройки проекта (ctrl + alt + shift + s или <code>File</code> - <code>Project structure</code>) во вкладку <code>Project</code>.</p>
+            <p>Скачиваем <code>AIR SDK</code> (15 версия)</p>
+            <p>Указываем путь к <code>AIR SDK</code> - конкретно к папке com.adobe.flash.compiler_4.7.X.XXXXXX/AIRSDK (еще раз подчеркну, к папке AIRSDK)</p>
+            <img src="03.png"></img>
+        </li>
+        <li>
+            <p>Вкладка <code>Libraries</code> - зеленый плюсик сверху - добавим папку <code>app/libs</code> в корне исходников.</p>
+            <img src="04.png"></img>
+        </li>
+        <li>
+            <p>Вкладка <code>Modules</code> - вкладка <code>General</code> - укажем основной класс (<code>Scratch</code>):</p>
+            <img src="05.png"></img>
+        </li>
+        <li>
+            <p>Вкладка <code>Modules</code> - вкладка <code>Android</code> - <code>Application descriptor</code>: Scratchduino-app.xml</p>
+            <img src="06.png"></img>
+        </li>
+        <li>
+            <p>Вкладка <code>Modules</code> - вкладка <code>Dependencies</code> - зеленый плюсик справа - <code>Project or global library</code> - библиотеки, добавленные на шаге 4.</p>
+            <img src="07.png"></img>
+        </li>
+        <li>
+            <p>Вкладка <code>Modules</code> - вкладка <code>Android</code> - зеленый плюсик справа - две иконки из <code>app/src/assets</p>
+            <img src="08.png"></img>
+        </li>
+        <h1 id="сборка">Если вы все сделали правильно, то <code>Build</code> - <code>Package AIR Application</code> соберет вам приложение. При сборке отключать <code>captive runtime.</code></h1>
+        <h2><font color="white">Удачи! Она вам ох как еще пригодится!</font></h2>
+    </body>
+</html>
