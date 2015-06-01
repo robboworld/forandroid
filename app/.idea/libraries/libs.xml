@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/Bluetooth.swc!/" />
+      <root url="jar://$PROJECT_DIR$/libs/blooddy_crypto.swc!/" />
+      <root url="jar://$PROJECT_DIR$/libs/NativeDialogs.swc!/" />
+      <root url="jar://$PROJECT_DIR$/libs/playerglobal.swc!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

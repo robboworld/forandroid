@@ -21,7 +21,9 @@
 // John Maloney, September 2010
 
 package scratch {
+TARGET::android {
 	import com.as3breeze.air.ane.android.events.BluetoothDataEvent;
+}
 	
 	import flash.display.BitmapData;
 	import flash.display.DisplayObject;
@@ -220,48 +222,51 @@ public class ScratchRuntime {
 	}
 	
 	private var previousData:String = "";
+
 	public function addDeviceListeners():void {
 		if (app.device == null) 
 			return;
-		app.device.addReceiveDataListener(function (bev:BluetoothDataEvent):void {
-			var ba:String = bev.message;
-			var len:int = ba.length;
-			var cur:String = bev.message;
-			
-			if (previousData.length <= cur.length && cur.substr(0, previousData.length) == previousData) {
-				previousData = cur;
-			} else if (previousData.charAt() == '1') {
-				previousData = previousData + cur;
-			} else {
-				previousData = previousData.substr(8, previousData.length - 8) + cur;
-			}
-			
-			if (8 < previousData.length && (previousData.charAt() == '1' && previousData.charAt(8) == '1')) {
+		TARGET::android {
+			app.device.addReceiveDataListener(function (bev:BluetoothDataEvent):void {
+				var ba:String = bev.message;
+				var len:int = ba.length;
+				var cur:String = bev.message;
+
+				if (previousData.length <= cur.length && cur.substr(0, previousData.length) == previousData) {
+					previousData = cur;
+				} else if (previousData.charAt() == '1') {
+					previousData = previousData + cur;
+				} else {
+					previousData = previousData.substr(8, previousData.length - 8) + cur;
+				}
+
+				if (8 < previousData.length && (previousData.charAt() == '1' && previousData.charAt(8) == '1')) {
 					previousData = previousData.substr(8, previousData.length - 8);
-			}
-				
-			//trace("len:", len, "data:", previousData);
-			if (len == 0) {
-				return;
-			}
-			var i:int = 0;
-			for  (; i + 15 < previousData.length; i += 16) {
-				var channel:int = fromBit(previousData.substr(i + 1, 4));
-				if (channel >= 7 || channel == 5 || channel < 0) 
-					continue;
-				if (channel == 6) channel = 5;
-				var value:int = fromBit(previousData.substr(i + 5, 3).concat(previousData.substr(i + 9, 7)));
-				analogs[channel] = value;
-				app.setAnalogText(channel, '' + value);
-			}
-			previousData = previousData.substr(i, previousData.length - i);
-			//trace("received mod = ", receivedData.length % 16);
-		});
+				}
+
+				//trace("len:", len, "data:", previousData);
+				if (len == 0) {
+					return;
+				}
+				var i:int = 0;
+				for (; i + 15 < previousData.length; i += 16) {
+					var channel:int = fromBit(previousData.substr(i + 1, 4));
+					if (channel >= 7 || channel == 5 || channel < 0)
+						continue;
+					if (channel == 6) channel = 5;
+					var value:int = fromBit(previousData.substr(i + 5, 3).concat(previousData.substr(i + 9, 7)));
+					analogs[channel] = value;
+					app.setAnalogText(channel, '' + value);
+				}
+				previousData = previousData.substr(i, previousData.length - i);
+				//trace("received mod = ", receivedData.length % 16);
+			});
+		}
 	}
 	
 	public function removeDeviceListeners():void {
 		if (app.device != null)
-			app.device.removeAllListners();
+			app.device.removeAllListeners();
 	}
 	
 	public function stepRuntime():void {
@@ -444,7 +449,6 @@ public class ScratchRuntime {
 		return !app.extensionManager.isInternal(extName);
 	}
 
-	true // LOLKA
 	public function hasGraphicEffects():Boolean {
 		var found:Boolean = false;
 		allStacksAndOwnersDo(function (stack:Block, target:ScratchObj):void {
@@ -458,7 +462,6 @@ public class ScratchRuntime {
 		return found;
 	}
 
-	true // LOLKA
 	private function isGraphicEffectBlock(b:Block):Boolean {
 		return ('op' in b && (b.op == 'changeGraphicEffect:by:' || b.op == 'setGraphicEffect:to:') &&
 				('argValue' in b.args[0]) && b.args[0].argValue != 'ghost' && b.args[0].argValue != 'brightness');
@@ -530,7 +533,6 @@ public class ScratchRuntime {
 				(('whenSensorGreaterThan' == op) && ('video motion' == interp.arg(b, 0)))) {
 					app.libraryPart.showVideoButton();
 			}
-			//true // LOLKA
 			 {
 				// Should we go 3D?
 				if(isGraphicEffectBlock(b))
@@ -637,7 +639,6 @@ public class ScratchRuntime {
 		if (app.stagePane != null) stopAll();
 		if (app.scriptsPane) app.scriptsPane.viewScriptsFor(null);
 
-		//true // LOLKA
 		{ if(app.isIn3D) app.render3D.setStage(project, project.penLayer); }
 
 		for each (var obj:ScratchObj in project.allObjects()) {
@@ -661,11 +662,9 @@ public class ScratchRuntime {
 		}
 		app.extensionManager.step();
 		app.projectLoaded();
-		//true // LOLKA
 		{ checkForGraphicEffects(); }
 	}
 
-	true // LOLKA
 	public function checkForGraphicEffects():void {
 		if(hasGraphicEffects()) app.go3D();
 		else app.go2D();

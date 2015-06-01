@@ -23,22 +23,22 @@
 // This part holds the Scratch Logo, cursor tools, screen mode buttons, and more.
 
 package ui.parts {
-	import flash.display.Bitmap;
-	import flash.display.Graphics;
-	import flash.display.Shape;
-	import flash.display.Sprite;
-	import flash.events.MouseEvent;
-	import flash.text.TextField;
-	import flash.text.TextFormat;
-	
-	import assets.Resources;
-	
-	import translation.Translator;
-	
-	import uiwidgets.CursorTool;
-	import uiwidgets.IconButton;
-	import uiwidgets.Menu;
-	import uiwidgets.SimpleTooltips;
+import flash.display.Bitmap;
+import flash.display.Graphics;
+import flash.display.Shape;
+import flash.display.Sprite;
+import flash.events.MouseEvent;
+import flash.text.TextField;
+import flash.text.TextFormat;
+
+import assets.Resources;
+
+import translation.Translator;
+
+import uiwidgets.CursorTool;
+import uiwidgets.IconButton;
+import uiwidgets.Menu;
+import uiwidgets.SimpleTooltips;
 
 public class TopBarPart extends UIPart {
 
@@ -49,7 +49,9 @@ public class TopBarPart extends UIPart {
 	protected var editMenu:IconButton;
 	protected var devicesMenu:IconButton;
 	protected var helpMenu:IconButton;
-    //protected var donateMenu:IconButton; // UNCOMMENT TO ENABLE DONATION
+	ANDROID::enableDonationButton {
+		protected var donateMenu:IconButton;
+	}
 
 	private var copyTool:IconButton;
 	private var cutTool:IconButton;
@@ -82,7 +84,7 @@ public class TopBarPart extends UIPart {
 			Scratch.app.showEditMenu(Menu.dummyButton());
 			Scratch.app.showDevicesMenu(Menu.dummyButton());
 			Scratch.app.showHelpMenu(Menu.dummyButton());
-            Scratch.app.donate(Menu.dummyButton());
+			Scratch.app.donate(Menu.dummyButton());
 		}
 		return ['File', 'Edit', 'Devices', 'Help', 'Donate', 'Tips', 'Duplicate', 'Delete', 'Grow', 'Shrink', 'Block help', 'Offline Editor'];
 	}
@@ -93,7 +95,9 @@ public class TopBarPart extends UIPart {
 			removeChild(editMenu);
 			removeChild(devicesMenu);
 			removeChild(helpMenu);
-            //removeChild(donateMenu); // UNCOMMENT TO ENABLE DONATION
+			ANDROID::enableDonationButton  {
+				removeChild(donateMenu);
+			}
 		}
 	}
 
@@ -129,20 +133,22 @@ public class TopBarPart extends UIPart {
 		editMenu.x = nextX;
 		editMenu.y = buttonY;
 		nextX += editMenu.width + buttonSpace;
-		
+
 		//added Devices Menu
 		devicesMenu.x = nextX;
 		devicesMenu.y = buttonY;
 		nextX += devicesMenu.width + buttonSpace;
-		
+
 		// add Help menu
 		helpMenu.x = nextX;
 		helpMenu.y = buttonY;
 		nextX += helpMenu.width + buttonSpace;
 
-        //donateMenu.x = nextX; 					// UNCOMMENT TO ENABLE DONATION
-        //donateMenu.y = buttonY; 					// UNCOMMENT TO ENABLE DONATION
-        //nextX += donateMenu.width + buttonSpace; 	// UNCOMMENT TO ENABLE DONATION
+		ANDROID::enableDonationButton {
+			donateMenu.x = nextX;
+			donateMenu.y = buttonY;
+			nextX += donateMenu.width + buttonSpace;
+		}
 		// cursor tool buttons
 		var space:int = 3;
 		copyTool.x = app.isOffline ? 493 : 427;
@@ -170,7 +176,9 @@ public class TopBarPart extends UIPart {
 		addChild(editMenu = makeMenuButton('Edit', app.showEditMenu, true));
 		addChild(devicesMenu = makeMenuButton('Devices', app.showDevicesMenu, true));
 		addChild(helpMenu = makeMenuButton('Help', app.showHelpMenu, true));
-        //addChild(donateMenu = makeMenuButton('Donate', app.donate, false)); // UNCOMMENT TO ENABLE DONATION
+		ANDROID::enableDonationButton  {
+			addChild(donateMenu = makeMenuButton('Donate', app.donate, false));
+		}
 	}
 
 	private function addToolButtons():void {

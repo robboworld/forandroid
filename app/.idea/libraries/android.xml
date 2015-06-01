@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="android" type="flex">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/AndroidBluetooth.ane!/" />
+      <root url="jar://$PROJECT_DIR$/libs/Bluetooth.swc!/" />
+      <root url="jar://$PROJECT_DIR$/libs/NativeDialogs.ane!/" />
+      <root url="jar://$PROJECT_DIR$/libs/NativeDialogs.swc!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

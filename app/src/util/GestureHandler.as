@@ -225,7 +225,7 @@ public class GestureHandler {
 			return;
 		}
 
-        /*//TODO change
+        /*
         if (app.editMode && mouseTarget is Block &&
                 ((mouseTarget as Block).op == Specs.GET_VAR || (mouseTarget as Block).op == Specs.GET_LIST)) {
             gesture = "menu";
@@ -435,8 +435,9 @@ public class GestureHandler {
 		gesture = 'click';
 	}
 
-    private function handleDoubleClick(evt:MouseEvent):void {
-        if (mouseTarget == null) return;
+	private function handleDoubleClick(evt:MouseEvent):void {
+        trace("double click");
+		if (mouseTarget == null) return;
         //TODO writed by Ilya Peresadin*/
         gesture = "doubleClick";
         if ('menu' in mouseTarget && mouseTarget is Block) {
@@ -449,7 +450,7 @@ public class GestureHandler {
 
         if ('doubleClick' in mouseTarget)
             mouseTarget.doubleClick(evt);
-    }
+	}
 
 	private function handleMenu(evt:MouseEvent):void {
 		if (mouseTarget == null) return;

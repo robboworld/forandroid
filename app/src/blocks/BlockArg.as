@@ -48,17 +48,18 @@ package blocks {
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.text.TextFieldType;
-	import flash.text.engine.TextElement;
-	
+
+TARGET::android {
 	import pl.mateuszmackowiak.nativeANE.dialogs.NativeTextInputDialog;
 	import pl.mateuszmackowiak.nativeANE.dialogs.support.NativeTextField;
 	import pl.mateuszmackowiak.nativeANE.dialogs.support.iNativeDialog;
 	import pl.mateuszmackowiak.nativeANE.events.NativeDialogEvent;
-	
+}
+
 	import scratch.BlockMenus;
-	
+
 	import translation.Translator;
-	
+
 	import util.Color;
 
 public class BlockArg extends Sprite {
@@ -191,12 +192,12 @@ public class BlockArg extends Sprite {
 	public function startEditing():void {
 		if (isEditable) {
 			field.type = TextFieldType.INPUT;
-			//field.selectable = true;
-			//if (field.text.length == 0) field.text = '  ';
-			//field.setSelection(0, field.text.length);
-			//root.stage.focus = field;
-			
-			//showUserTextPromptDialog(field.text, handler);
+			TARGET::desktop {
+				field.selectable = true;
+				if (field.text.length == 0) field.text = '  ';
+				field.setSelection(0, field.text.length);
+				root.stage.focus = field;
+			}
 		}
 	}
 
@@ -225,15 +226,17 @@ public class BlockArg extends Sprite {
 		tf.defaultTextFormat = Block.argTextFormat;
 		tf.selectable = false;
 		tf.addEventListener(Event.CHANGE, textChanged);
-		tf.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void {
-			if (isEditable) {
-				event.stopImmediatePropagation();
-				if (!Scratch.isShowingTextInputDialog) {
-					Scratch.isShowingTextInputDialog = true;
-					showUserTextPromptDialog();
+		TARGET::android {
+			tf.addEventListener(MouseEvent.CLICK, function (event:MouseEvent):void {
+				if (isEditable) {
+					event.stopImmediatePropagation();
+					if (!Scratch.isShowingTextInputDialog) {
+						Scratch.isShowingTextInputDialog = true;
+						showUserTextPromptDialog();
+					}
 				}
-			}
-		});
+			});
+		}
 		return tf;
 	}
 
@@ -281,65 +284,67 @@ public class BlockArg extends Sprite {
 			evt.stopImmediatePropagation();
 		}
 	}
-	
-	private function showUserTextPromptDialog(textHandler:Function = null):void {
-		function onCloseDialog(event:NativeDialogEvent):void {
-			var m:iNativeDialog = iNativeDialog(event.target);
-			m.removeEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
-			m.dispose();
-			field.text = text;
-			textChanged(new Event(TextEvent.TEXT_INPUT));
-			Scratch.isShowingTextInputDialog = false;
+
+	TARGET::android {
+		private function showUserTextPromptDialog(textHandler:Function = null):void {
+			function onCloseDialog(event:NativeDialogEvent):void {
+				var m:iNativeDialog = iNativeDialog(event.target);
+				m.removeEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+				m.dispose();
+				field.text = text;
+				textChanged(new Event(TextEvent.TEXT_INPUT));
+				Scratch.isShowingTextInputDialog = false;
+			}
+
+			function onCancelDialog(event:NativeDialogEvent):void {
+				var m:iNativeDialog = iNativeDialog(event.target);
+				m.removeEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
+				m.dispose();
+				field.text = initialText;
+				Scratch.isShowingTextInputDialog = false;
+			}
+
+			var initialText:String = field.text;
+			var text:String = field.text;
+
+			var t:NativeTextInputDialog = new NativeTextInputDialog();
+			t.setTitle(Translator.map("Enter value"));
+			t.setCancelable(true);
+			t.buttons = Vector.<String>(["OK"]);
+
+			t.addEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
+			t.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+
+			var v:Vector.<NativeTextField> = new Vector.<NativeTextField>();
+
+			var message:NativeTextField = new NativeTextField(null);
+			message.text = Translator.map("  To cancel, tap outside the dialog or press back button  ");
+			message.editable = false;
+			v.push(message);
+
+			var textInput:NativeTextField = new NativeTextField("Value");
+			textInput.displayAsPassword = false;
+			textInput.prompText = "Value";
+			if (isNumber) {
+				textInput.softKeyboardType = "floatnumber";
+			} else {
+				textInput.softKeyboardType = SoftKeyboardType.DEFAULT;
+			}
+			textInput.text = initialText;
+			textInput.addEventListener(Event.CHANGE, function (event:Event):void {
+				var tf:NativeTextField = NativeTextField(event.target);
+				text = tf.text;
+			});
+			textInput.addEventListener(TextEvent.TEXT_INPUT, function (event:Event):void {
+				var tf:NativeTextField = NativeTextField(event.target);
+				tf.nativeTextInputDialog.hide(0);
+			});
+
+			v.push(textInput);
+
+			t.textInputs = v;
+			t.show(true);
 		}
-		
-		function onCancelDialog(event:NativeDialogEvent):void {
-			var m:iNativeDialog = iNativeDialog(event.target);
-			m.removeEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
-			m.dispose();
-			field.text = initialText;
-			Scratch.isShowingTextInputDialog = false;
-		}
-		
-		var initialText:String = field.text;
-		var text:String = field.text;
-		
-		var t:NativeTextInputDialog = new NativeTextInputDialog();
-		t.setTitle(Translator.map("Enter value"));
-		t.setCancelable(true);
-		t.buttons = Vector.<String> (["OK"]);
-		
-		t.addEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
-		t.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
-		
-		var v:Vector.<NativeTextField> = new Vector.<NativeTextField>();
-		
-		var message:NativeTextField = new NativeTextField(null);
-		message.text = Translator.map("  To cancel, tap outside the dialog or press back button  ");
-		message.editable = false;
-		v.push(message);
-		
-		var textInput:NativeTextField = new NativeTextField("Value");
-		textInput.displayAsPassword = false;
-		textInput.prompText = "Value";
-		if (isNumber) {
-			textInput.softKeyboardType = "floatnumber";
-		} else {
-			textInput.softKeyboardType = SoftKeyboardType.DEFAULT;
-		}
-		textInput.text = initialText;
-		textInput.addEventListener(Event.CHANGE, function(event:Event):void{
-			var tf:NativeTextField = NativeTextField(event.target);
-			text = tf.text;
-		});
-		textInput.addEventListener(TextEvent.TEXT_INPUT, function(event:Event):void{
-			var tf:NativeTextField = NativeTextField(event.target);
-			tf.nativeTextInputDialog.hide(0);
-		});
-		
-		v.push(textInput);
-		
-		t.textInputs = v;
-		t.show(true);
 	}
 
 }}

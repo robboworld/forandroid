@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="global" type="flex">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/blooddy_crypto.swc!/" />
+      <root url="jar://$PROJECT_DIR$/libs/playerglobal.swc!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

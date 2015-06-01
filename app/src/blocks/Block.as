@@ -625,7 +625,6 @@ public class Block extends Sprite {
 				b.requestLoader.close();
 		}
 		topBlock().fixStackLayout();
-		//true // LOLKA
 		{ Scratch.app.runtime.checkForGraphicEffects(); }
 	}
 
@@ -837,7 +836,6 @@ public class Block extends Sprite {
 		if (top != this) x += top.width + 5;
 		app.runtime.recordForUndelete(this, x, y, 0, app.viewedObj());
 		app.scriptsPane.saveScripts();
-		//true // LOLKA
 		{ app.runtime.checkForGraphicEffects(); }
 		app.updatePalette();
 		return true;

@@ -27,11 +27,7 @@ package {
 
 import blocks.Block;
 
-import com.as3breeze.air.ane.android.events.BluetoothDeviceEvent;
-
-import connectors.AndroidBluetooth;
-import connectors.IConnector;
-import connectors.IDevice;
+import connectors.*;
 
 import extensions.ExtensionManager;
 
@@ -55,6 +51,7 @@ import flash.filesystem.FileStream;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.net.FileReference;
+import flash.net.FileReferenceList;
 import flash.net.LocalConnection;
 import flash.net.URLRequest;
 import flash.net.navigateToURL;
@@ -68,16 +65,6 @@ import flash.utils.ByteArray;
 import flash.utils.getTimer;
 
 import interpreter.Interpreter;
-
-import pl.mateuszmackowiak.nativeANE.dialogs.NativeAlertDialog;
-import pl.mateuszmackowiak.nativeANE.dialogs.NativeListDialog;
-import pl.mateuszmackowiak.nativeANE.dialogs.NativeProgressDialog;
-import pl.mateuszmackowiak.nativeANE.dialogs.NativeTextInputDialog;
-import pl.mateuszmackowiak.nativeANE.dialogs.support.NativeTextField;
-import pl.mateuszmackowiak.nativeANE.dialogs.support.iNativeDialog;
-import pl.mateuszmackowiak.nativeANE.events.NativeDialogEvent;
-import pl.mateuszmackowiak.nativeANE.events.NativeDialogListEvent;
-import pl.mateuszmackowiak.nativeANE.notifications.Toast;
 
 import render3d.DisplayObjectContainerIn3D;
 
@@ -119,9 +106,25 @@ import util.ProjectIO;
 import util.Server;
 import util.StringUtils;
 import util.Transition;
+import util.UnimplementedError;
 
 import watchers.ListWatcher;
 
+TARGET::android {
+	import com.as3breeze.air.ane.android.events.BluetoothDeviceEvent;
+}
+
+TARGET::android {
+	import pl.mateuszmackowiak.nativeANE.dialogs.NativeAlertDialog;
+	import pl.mateuszmackowiak.nativeANE.dialogs.NativeListDialog;
+	import pl.mateuszmackowiak.nativeANE.dialogs.NativeProgressDialog;
+	import pl.mateuszmackowiak.nativeANE.dialogs.NativeTextInputDialog;
+	import pl.mateuszmackowiak.nativeANE.dialogs.support.NativeTextField;
+	import pl.mateuszmackowiak.nativeANE.dialogs.support.iNativeDialog;
+	import pl.mateuszmackowiak.nativeANE.events.NativeDialogEvent;
+	import pl.mateuszmackowiak.nativeANE.events.NativeDialogListEvent;
+	import pl.mateuszmackowiak.nativeANE.notifications.Toast;
+}
 public class Scratch extends Sprite {
 	// Version
 	public static const versionString:String = 'v426';
@@ -249,7 +252,12 @@ public class Scratch extends Sprite {
 		
 		initCatSprite();
 		fixLayout();
-		connector = new AndroidBluetooth();
+		TARGET::android {
+			connector = new AndroidConnector();
+		}
+		TARGET::desktop {
+			connector = new DesktopConnector();
+		}
 		
 		//Analyze.collectAssets(0, 119110);
 		//Analyze.checkProjects(56086, 64220);
@@ -359,7 +367,6 @@ public class Scratch extends Sprite {
 	public function loadProjectFailed():void {}
 
 	protected function checkFlashVersion():void {
-		//true // LOLKA
 		{
 			if (Capabilities.playerType != "Desktop" || Capabilities.version.indexOf('IOS') === 0) {
 				var versionString:String = Capabilities.version.substr(Capabilities.version.indexOf(' ') + 1);
@@ -377,7 +384,6 @@ public class Scratch extends Sprite {
 		render3D = null;
 	}
 
-	true // LOLKA
 	protected function handleRenderCallback(enabled:Boolean):void {
 		if(!enabled) {
 			go2D();
@@ -412,7 +418,6 @@ public class Scratch extends Sprite {
 		} catch (e:Error) {}
 	}
 
-	true // LOLKA
 	public function go3D():void {
 		if(!render3D || isIn3D) return;
 
@@ -423,7 +428,6 @@ public class Scratch extends Sprite {
 		isIn3D = true;
 	}
 
-	true // LOLKA
 	public function go2D():void {
 		if(!render3D || !isIn3D) return;
 
@@ -529,7 +533,6 @@ public class Scratch extends Sprite {
 
 		if (lp) fixLoadProgressLayout();
 		stagePane.updateCostume();
-		//true // LOLKA
 		{ if(isIn3D) render3D.onStageResize(); }
 	}
 
@@ -547,7 +550,6 @@ public class Scratch extends Sprite {
 //		}
 		// Handle ctrl-m and toggle 2d/3d mode
 		else if(evt.ctrlKey && evt.charCode == 109) {
-			//true // LOLKA
 			{ isIn3D ? go2D() : go3D(); }
 			evt.preventDefault();
 			evt.stopImmediatePropagation();
@@ -811,7 +813,6 @@ public class Scratch extends Sprite {
 			frameRateGraph.y = stage.stageHeight - frameRateGraphH;
 			addChild(frameRateGraph); // put in front
 		}
-		//true // LOLKA
 		 { if (isIn3D) render3D.onStageResize(); }
 	}
 
@@ -937,103 +938,107 @@ public class Scratch extends Sprite {
 	}
 	
 	protected function searchDevices():void {
-		
-		function showProgressDialog():void {
-			var p:NativeProgressDialog= new NativeProgressDialog();
-			p.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
-			p.setIndeterminate(true);
-			p.title = Translator.map("Searching for devices");//TRANSLATE
-			p.message = Translator.map("Please wait");//TRANSLATE
-			p.showSpinner();
-			progressPopup = p;
+		TARGET::desktop {
+			throw new UnimplementedError("searchDevices in not implemented for desktop");
 		}
-		
-		function onCloseDialog(event:NativeDialogEvent):void {
-			var m:iNativeDialog = iNativeDialog(event.target);
-			m.removeEventListener(NativeDialogEvent.CLOSED,onCloseDialog);
-			m.dispose();
-		}
-		
-		var progressPopup:NativeProgressDialog;
-		
-		var alreadyShown:Boolean = false;
-		
-		var error:int = connector.scanForVisibleDevices(
-			function():void {
-				showProgressDialog();
-			},
-			
-			function (devices:Vector.<IDevice>):void {
-				//trace("devices = " + devices);
-				var scratchNames:Vector.<Object> = new Vector.<Object>();
-				var scratchDevices:Vector.<IDevice> = new Vector.<IDevice>();
-				for each (var t:IDevice in devices) {
-					if (t.getName().substr(0, "Scratchduino".length) == "Scratchduino") {
-						scratchDevices.push(t);
-						scratchNames.push(t.getName());
-					}
-				}
-				if (scratchDevices.length != 0) {
-					var bluetoothDialog:NativeListDialog = new NativeListDialog();
-					bluetoothDialog.setTitle(Translator.map("Scratchduino devices"));
-					bluetoothDialog.dataProvider = scratchNames;
-					bluetoothDialog.buttons = Vector.<String>([Translator.map("OK"), Translator.map("Cancel")]);
-					bluetoothDialog.selectedIndex = 0;
-					
-					bluetoothDialog.addEventListener(NativeDialogEvent.CLOSED, function(ev:Event):void {
-						var n:NativeListDialog = NativeListDialog(ev.target);
-						n.dispose();
-						device = scratchDevices[bluetoothDialog.selectedIndex];
-						trace("selected", bluetoothDialog.selectedIndex);
-						
-						device.addDeviceConnectedListener(function (bev:BluetoothDeviceEvent):void {
-							trace("connected to ", device.getName());
-							runtime.addDeviceListeners();
-							device.sendByte(runtime.maskSend);
-							Toast.show(Translator.map("Connected to ") + device.getName(), Toast.LENGTH_SHORT);
-							tabsPart.refresh();
-						});
-						
-						device.addDeviceConnectErrorListener(function (bev:BluetoothDeviceEvent):void {
-							disconnect();
-						});
-						
-						device.addDeviceDisconnectedListener(function (bev:BluetoothDeviceEvent):void {
-							if (device == null)
-								return;
-							var name:String = device.getName();
-							disconnect();
-							if (alreadyShown)
-								return;
-							alreadyShown = true;
-							NativeAlertDialog.showAlert(Translator.map("Lost connection to ") + name + ". " +
-								Translator.map("Make sure that Bluetooth is enabled on robot and search for devices again"), 
-								Translator.map("Connection lost")).
-								addEventListener(NativeDialogEvent.CLOSED, function():void {
-										alreadyShown = false;
-								});
-						});
-						
-						if (!device.isConnected())
-							device.connect();
-						
-					});
-					
-					progressPopup.dispose();
-					
-					bluetoothDialog.setCancelable(true);
-					bluetoothDialog.show();
-				} else {
-					progressPopup.dispose();
-					NativeAlertDialog.showAlert(Translator.map("There are no devices found. Make sure that Bluetooth is enabled on robot"), Translator.map("No devices found"));
-				}
+		TARGET::android {
+			function showProgressDialog():void {
+				var p:NativeProgressDialog = new NativeProgressDialog();
+				p.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+				p.setIndeterminate(true);
+				p.title = Translator.map("Searching for devices");//TRANSLATE
+				p.message = Translator.map("Please wait");//TRANSLATE
+				p.showSpinner();
+				progressPopup = p;
 			}
-		);	
+
+			function onCloseDialog(event:NativeDialogEvent):void {
+				var m:iNativeDialog = iNativeDialog(event.target);
+				m.removeEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+				m.dispose();
+			}
+
+			var progressPopup:NativeProgressDialog;
+
+			var alreadyShown:Boolean = false;
+
+			var error:int = connector.scanForVisibleDevices(
+					function ():void {
+						showProgressDialog();
+					},
+
+					function (devices:Vector.<IDevice>):void {
+						//trace("devices = " + devices);
+						var scratchNames:Vector.<Object> = new Vector.<Object>();
+						var scratchDevices:Vector.<IDevice> = new Vector.<IDevice>();
+						for each (var t:IDevice in devices) {
+							if (t.getName().substr(0, "Scratchduino".length) == "Scratchduino") {
+								scratchDevices.push(t);
+								scratchNames.push(t.getName());
+							}
+						}
+						if (scratchDevices.length != 0) {
+							var bluetoothDialog:NativeListDialog = new NativeListDialog();
+							bluetoothDialog.setTitle(Translator.map("Scratchduino devices"));
+							bluetoothDialog.dataProvider = scratchNames;
+							bluetoothDialog.buttons = Vector.<String>([Translator.map("OK"), Translator.map("Cancel")]);
+							bluetoothDialog.selectedIndex = 0;
+
+							bluetoothDialog.addEventListener(NativeDialogEvent.CLOSED, function (ev:Event):void {
+								var n:NativeListDialog = NativeListDialog(ev.target);
+								n.dispose();
+								device = scratchDevices[bluetoothDialog.selectedIndex];
+								trace("selected", bluetoothDialog.selectedIndex);
+
+								device.addDeviceConnectedListener(function (bev:BluetoothDeviceEvent):void {
+									trace("connected to ", device.getName());
+									runtime.addDeviceListeners();
+									device.sendByte(runtime.maskSend);
+									Toast.show(Translator.map("Connected to ") + device.getName(), Toast.LENGTH_SHORT);
+									tabsPart.refresh();
+								});
+
+								device.addDeviceConnectErrorListener(function (bev:BluetoothDeviceEvent):void {
+									disconnect();
+								});
+
+								device.addDeviceDisconnectedListener(function (bev:BluetoothDeviceEvent):void {
+									if (device == null)
+										return;
+									var name:String = device.getName();
+									disconnect();
+									if (alreadyShown)
+										return;
+									alreadyShown = true;
+									NativeAlertDialog.showAlert(Translator.map("Lost connection to ") + name + ". " +
+											Translator.map("Make sure that Bluetooth is enabled on robot and search for devices again"),
+											Translator.map("Connection lost")).
+											addEventListener(NativeDialogEvent.CLOSED, function ():void {
+												alreadyShown = false;
+											});
+								});
+
+								if (!device.isConnected())
+									device.connect();
+
+							});
+
+							progressPopup.dispose();
+
+							bluetoothDialog.setCancelable(true);
+							bluetoothDialog.show();
+						} else {
+							progressPopup.dispose();
+							NativeAlertDialog.showAlert(Translator.map("There are no devices found. Make sure that Bluetooth is enabled on robot"), Translator.map("No devices found"));
+						}
+					}
+			);
+		}
 	}
 
 	public function disconnect():void {
 		if (device != null) {
-			device.removeAllListners();
+			device.removeAllListeners();
 			device.disconnect();
 			runtime.resetAnalogs();
 			runtime.resetMask();
@@ -1142,107 +1147,126 @@ public class Scratch extends Sprite {
 	 */
 	
 	protected function exportProjectToFile(fromJS:Boolean = false):void {
-		var projectFileName:String;
-		var zipData:ByteArray;
-		function squeakSoundsConverted():void {
-			scriptsPane.saveScripts(false);
-			zipData = projIO.encodeProjectAsZipFile(stagePane);
-			
-			/*  Create Text input dialog, where user inputs name for project.
-			 */
-			
-			var t:NativeTextInputDialog = new NativeTextInputDialog();
-			t.setTitle(Translator.map("Choose project name"));
-			t.setCancelable(true);
-			/*  Any button will trigger CLOSED event, so we need only OK button.
-			 *  Dialog can be canceled with Android back button or tapping anywhere
-			 *  outide the dialog.
-			 */
-			t.buttons = Vector.<String> (["OK"/*, "Cancel"*/]);
-			
-			t.addEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
-			t.addEventListener(NativeDialogEvent.CLOSED, onCloseOKDialog);
-			
-			var v:Vector.<NativeTextField> = new Vector.<NativeTextField>();
-			
-			
-			//creates a message text-field  
-			var message:NativeTextField = new NativeTextField(null);
-			/*  Two extra spaces in the beginning and end to add some padding to message
-			 */
-			message.text = Translator.map("  To cancel, tap outside the dialog or press back button  ");
-			message.editable = false;
-			v.push(message);
-			
-			
-			// create text-input
-			var projectNameTextInput:NativeTextField = new NativeTextField("Project name");
-			projectNameTextInput.displayAsPassword = false;
-			projectNameTextInput.prompText = Translator.map("Project name");
-			projectNameTextInput.softKeyboardType = SoftKeyboardType.DEFAULT;
-			projectNameTextInput.addEventListener(Event.CHANGE, function(event:Event):void{
-				var tf:NativeTextField = NativeTextField(event.target);
-				projectFileName = tf.text;
-			});
-			// on return click
-			projectNameTextInput.addEventListener(TextEvent.TEXT_INPUT, function(event:Event):void{
-				var tf:NativeTextField = NativeTextField(event.target);
-				tf.nativeTextInputDialog.hide(0);
-				trace(projectFileName);
-			});
-			
-			v.push(projectNameTextInput);
-			
-			t.textInputs = v;
-			t.show(true);
-			
-		}
-		
-		/*function fileSaved(e:Event):void {
-			if (!fromJS) {
-				setProjectName(e.target.name);
+		TARGET::android {
+			var projectFileName:String;
+			var zipData:ByteArray;
+
+			function squeakSoundsConverted():void {
+				scriptsPane.saveScripts(false);
+				zipData = projIO.encodeProjectAsZipFile(stagePane);
+
+				/*  Create Text input dialog, where user inputs name for project.
+				 */
+
+				var t:NativeTextInputDialog = new NativeTextInputDialog();
+				t.setTitle(Translator.map("Choose project name"));
+				t.setCancelable(true);
+				/*  Any button will trigger CLOSED event, so we need only OK button.
+				 *  Dialog can be canceled with Android back button or tapping anywhere
+				 *  outide the dialog.
+				 */
+				t.buttons = Vector.<String>(["OK"/*, "Cancel"*/]);
+
+				t.addEventListener(NativeDialogEvent.CANCELED, onCancelDialog);
+				t.addEventListener(NativeDialogEvent.CLOSED, onCloseOKDialog);
+
+				var v:Vector.<NativeTextField> = new Vector.<NativeTextField>();
+
+
+				//creates a message text-field
+				var message:NativeTextField = new NativeTextField(null);
+				/*  Two extra spaces in the beginning and end to add some padding to message
+				 */
+				message.text = Translator.map("  To cancel, tap outside the dialog or press back button  ");
+				message.editable = false;
+				v.push(message);
+
+
+				// create text-input
+				var projectNameTextInput:NativeTextField = new NativeTextField("Project name");
+				projectNameTextInput.displayAsPassword = false;
+				projectNameTextInput.prompText = Translator.map("Project name");
+				projectNameTextInput.softKeyboardType = SoftKeyboardType.DEFAULT;
+				projectNameTextInput.addEventListener(Event.CHANGE, function (event:Event):void {
+					var tf:NativeTextField = NativeTextField(event.target);
+					projectFileName = tf.text;
+				});
+				// on return click
+				projectNameTextInput.addEventListener(TextEvent.TEXT_INPUT, function (event:Event):void {
+					var tf:NativeTextField = NativeTextField(event.target);
+					tf.nativeTextInputDialog.hide(0);
+					trace(projectFileName);
+				});
+
+				v.push(projectNameTextInput);
+
+				t.textInputs = v;
+				t.show(true);
+
 			}
-		}*/
-		
-		/* Handler for dialog's close event. Dialog is used for picking
-		*  filename for project. Text is saved in onChange event, this is
-		*  used only to remove handler and show dialog once again if
-		*  user entered empty string for project name.
-		*/
-		function onCloseOKDialog(event:NativeDialogEvent):void {
-			var m:iNativeDialog = iNativeDialog(event.target);
-			trace(event.target);
-			m.removeEventListener(NativeDialogEvent.CLOSED, onCloseOKDialog);
-			trace(event);
-			m.dispose();
-			
-			projectFileName = fixFileName(projectFileName);
-			if (projectFileName.length == 0 || projectFileName == ' ') {
-				Toast.show("Project name must contain at least one symbol", Toast.LENGTH_SHORT);
-				// create and show dialog again
-				squeakSoundsConverted();
+
+			/*function fileSaved(e:Event):void {
+			 if (!fromJS) {
+			 setProjectName(e.target.name);
+			 }
+			 }*/
+
+			/* Handler for dialog's close event. Dialog is used for picking
+			 *  filename for project. Text is saved in onChange event, this is
+			 *  used only to remove handler and show dialog once again if
+			 *  user entered empty string for project name.
+			 */
+			function onCloseOKDialog(event:NativeDialogEvent):void {
+				var m:iNativeDialog = iNativeDialog(event.target);
+				trace(event.target);
+				m.removeEventListener(NativeDialogEvent.CLOSED, onCloseOKDialog);
+				trace(event);
+				m.dispose();
+
+				projectFileName = fixFileName(projectFileName);
+				if (projectFileName.length == 0 || projectFileName == ' ') {
+					Toast.show("Project name must contain at least one symbol", Toast.LENGTH_SHORT);
+					// create and show dialog again
+					squeakSoundsConverted();
+					return;
+				}
+				if (!StringUtils.endsWith(projectFileName, ".sb2")) {
+					projectFileName = projectFileName + ".sb2";
+				}
+				setProjectName(projectFileName);
+				writeBytesToFile(projectFileName, zipData);
+			}
+
+			function onCancelDialog(event:NativeDialogEvent):void {
+				var m:iNativeDialog = iNativeDialog(event.target);
+				trace(event.target);
+				m.removeEventListener(NativeDialogEvent.CANCELED, onCloseOKDialog);
+				trace(event);
+				m.dispose();
+			}
+
+			if (loadInProgress) {
 				return;
 			}
-			if (!StringUtils.endsWith(projectFileName, ".sb2")) {
-				projectFileName = projectFileName + ".sb2";
+			var projIO:ProjectIO = new ProjectIO(this);
+			projIO.convertSqueakSounds(stagePane, squeakSoundsConverted);
+		}
+		TARGET::desktop {
+			function squeakSoundsConvertedDesktop():void {
+				scriptsPane.saveScripts(false);
+				var defaultName:String = (projectName().length > 0) ? projectName() + '.sb2' : 'project.sb2';
+				var zipData:ByteArray = projIO.encodeProjectAsZipFile(stagePane);
+				var file:FileReference = new FileReference();
+				file.addEventListener(Event.COMPLETE, fileSaved);
+				file.save(zipData, fixFileName(defaultName));
 			}
-			setProjectName(projectFileName);
-			writeBytesToFile(projectFileName, zipData);
+			function fileSaved(e:Event):void {
+				if (!fromJS) setProjectName(e.target.name);
+			}
+			if (loadInProgress) return;
+			var projIO:ProjectIO = new ProjectIO(this);
+			projIO.convertSqueakSounds(stagePane, squeakSoundsConvertedDesktop);
 		}
-		
-		function onCancelDialog(event:NativeDialogEvent):void {
-			var m:iNativeDialog = iNativeDialog(event.target);
-			trace(event.target);
-			m.removeEventListener(NativeDialogEvent.CANCELED, onCloseOKDialog);
-			trace(event);
-			m.dispose();
-		}
-		
-		if (loadInProgress) {
-			return;
-		}
-		var projIO:ProjectIO = new ProjectIO(this);
-		projIO.convertSqueakSounds(stagePane, squeakSoundsConverted);	
 	}
 	
 	private static function writeBytesToFile(fileName:String, data:ByteArray):void { 
@@ -1591,111 +1615,129 @@ public class Scratch extends Sprite {
 	}
 
 	static public function loadSingleFile(fileLoaded:Function, filters:Array = null):void {
-		var selectedIndex:int;
+		TARGET::android {
+			var selectedIndex:int;
 
-		/* Create directory if it doesn't exist (does nothing if already exist) */
-		scratchProjectsDirectory.createDirectory();
+			/* Create directory if it doesn't exist (does nothing if already exist) */
+			scratchProjectsDirectory.createDirectory();
 
-		/* Create dialog, where user can select project file to load. */
-		var m:NativeListDialog = new NativeListDialog();
-		m.setCancelable(true);
-		m.addEventListener(NativeDialogEvent.CANCELED, dialogCanceled);
-		m.addEventListener(NativeDialogEvent.OPENED, trace);
-		m.addEventListener(NativeDialogEvent.CLOSED, readSelected);
-		m.addEventListener(NativeDialogListEvent.LIST_CHANGE, fileSelected);
+			/* Create dialog, where user can select project file to load. */
+			var m:NativeListDialog = new NativeListDialog();
+			m.setCancelable(true);
+			m.addEventListener(NativeDialogEvent.CANCELED, dialogCanceled);
+			m.addEventListener(NativeDialogEvent.OPENED, trace);
+			m.addEventListener(NativeDialogEvent.CLOSED, readSelected);
+			m.addEventListener(NativeDialogListEvent.LIST_CHANGE, fileSelected);
 
-		m.buttons = Vector.<String> ([Translator.map("OK"), Translator.map("Cancel")]);
-		m.title = Translator.map("Select project");
-		m.message = "Message";
+			m.buttons = Vector.<String>([Translator.map("OK"), Translator.map("Cancel")]);
+			m.title = Translator.map("Select project");
+			m.message = "Message";
 
-		if (currentProjectsDirectory == null) {
-			currentProjectsDirectory = scratchProjectsDirectory;
-		}
-		var curDirFiles:Array = currentProjectsDirectory.getDirectoryListing();
-		curDirFiles.sort(function(x:File, y:File):int {
+			if (currentProjectsDirectory == null) {
+				currentProjectsDirectory = scratchProjectsDirectory;
+			}
+			var curDirFiles:Array = currentProjectsDirectory.getDirectoryListing();
+			curDirFiles.sort(function (x:File, y:File):int {
 
-			function cmp(f:File): int {
-				return f.isDirectory ? 0 : 1;
+				function cmp(f:File):int {
+					return f.isDirectory ? 0 : 1;
+				}
+
+				var a:int = cmp(x);
+				var b:int = cmp(y);
+				if (a != b) {
+					return a - b;
+				} else {
+					if (x.name < y.name) return -1;
+					else if (x.name == y.name) return 0;
+					else return 1;
+				}
+
+			});
+			var files:Vector.<File> = new Vector.<File>();
+			var names:Array = new Array();
+			if (currentProjectsDirectory.parent != null) {
+				names.push("..");
+				files.push(currentProjectsDirectory.parent);
+			}
+			for (var i:uint = 0; i < curDirFiles.length; i++) {
+				var name:String = curDirFiles[i].name;
+				if (curDirFiles[i].isDirectory) {
+					files.push(curDirFiles[i]);
+					names.push("[" + name + "]");
+				} else if (StringUtils.endsWith(name, ".sb2")) {
+					files.push(curDirFiles[i]);
+					names.push(name.substring(0, name.length - ".sb2".length));
+				} else if (StringUtils.endsWith(name, ".sb")) {
+					files.push(curDirFiles[i]);
+					names.push(name.substring(0, name.length - ".sb".length));
+				}
 			}
 
-			var a:int = cmp(x);
-			var b:int = cmp(y);
-			if (a != b) {
-				return a - b;
-			} else {
-				if (x.name < y.name) return -1;
-				else if (x.name == y.name) return 0;
-				else return 1;
+			m.dataProvider = Vector.<Object>(names);
+			m.displayMode = NativeListDialog.DISPLAY_MODE_SINGLE;
+			m.selectedIndex = -1;
+			m.show();
+
+			/* Seems to be easily replaced by @trace function.
+			 * Disposing is redundant because this event is always dispatched after CLOSED
+			 */
+			function dialogCanceled(event:NativeDialogEvent):void {
+				var d:NativeListDialog = NativeListDialog(event.target);
+
+				trace("Dialog canceled");
+
+				d.dispose();
 			}
 
-		});
-		var files:Vector.<File> = new Vector.<File>();
-		var names:Array = new Array();
-		if (currentProjectsDirectory.parent != null) {
-			names.push("..");
-			files.push(currentProjectsDirectory.parent);
-		}
-		for (var i:uint = 0; i < curDirFiles.length; i++) {
-			var name:String = curDirFiles[i].name;
-			if (curDirFiles[i].isDirectory) {
-				files.push(curDirFiles[i]);
-				names.push("[" + name + "]");
-			} else if (StringUtils.endsWith(name, ".sb2") ) {
-				files.push(curDirFiles[i]);
-				names.push(name.substring(0, name.length - ".sb2".length));
-			} else if (StringUtils.endsWith(name, ".sb")) {
-				files.push(curDirFiles[i]);
-				names.push(name.substring(0, name.length - ".sb".length));
-			}
-		}
+			function fileSelected(event:NativeDialogListEvent):void {
+				var d:NativeListDialog = NativeListDialog(event.target);
 
-		m.dataProvider = Vector.<Object>(names);
-		m.displayMode = NativeListDialog.DISPLAY_MODE_SINGLE;
-		m.selectedIndex = -1;
-		m.show();
+				selectedIndex = d.selectedIndex;
+				trace("Selected index:", selectedIndex);
 
-		/* Seems to be easily replaced by @trace function.
-		 * Disposing is redundant because this event is always dispatched after CLOSED
-		 */
-		function dialogCanceled(event:NativeDialogEvent):void {
-			var d:NativeListDialog = NativeListDialog(event.target);
+				d.dispose();
+				if (selectedIndex == -1) {
+					return;
+				}
 
-			trace("Dialog canceled");
-
-			d.dispose();
-		}
-
-		function fileSelected(event:NativeDialogListEvent):void {
-			var d:NativeListDialog = NativeListDialog(event.target);
-
-			selectedIndex = d.selectedIndex;
-			trace("Selected index:", selectedIndex);
-
-			d.dispose();
-			if (selectedIndex == -1) {
-				return;
+				if (files[selectedIndex].isDirectory) {
+					currentProjectsDirectory = files[selectedIndex];
+					loadSingleFile(fileLoaded, filters);
+				} else {
+					var projectFile:FileReference = FileReference(files[selectedIndex]);
+					projectFile.addEventListener(Event.COMPLETE, fileLoaded);
+					projectFile.load();
+				}
 			}
 
-			if (files[selectedIndex].isDirectory) {
-				currentProjectsDirectory = files[selectedIndex];
-				loadSingleFile(fileLoaded, filters);
-			} else {
+			function readSelected(event:NativeDialogEvent):void {
+				var m:NativeListDialog = NativeListDialog(event.target);
+
+				trace(event);
+
 				var projectFile:FileReference = FileReference(files[selectedIndex]);
 				projectFile.addEventListener(Event.COMPLETE, fileLoaded);
 				projectFile.load();
+
+				m.dispose();
 			}
 		}
+		TARGET::desktop {
+			function fileSelected1(event:Event):void {
+				if (fileList.fileList.length > 0) {
+					var file:FileReference = FileReference(fileList.fileList[0]);
+					file.addEventListener(Event.COMPLETE, fileLoaded);
+					file.load();
+				}
+			}
 
-		function readSelected(event:NativeDialogEvent):void {
-			var m:NativeListDialog = NativeListDialog(event.target);
-			
-			trace(event);
-	
-			var projectFile:FileReference = FileReference(files[selectedIndex]);
-			projectFile.addEventListener(Event.COMPLETE, fileLoaded);
-			projectFile.load();		
-			
-			m.dispose();
+			var fileList:FileReferenceList = new FileReferenceList();
+			fileList.addEventListener(Event.SELECT, fileSelected1);
+			try {
+				// Ignore the exception that happens when you call browse() with the file browser open
+				fileList.browse(filters);
+			} catch(e:*) {}
 		}
 	}
 
