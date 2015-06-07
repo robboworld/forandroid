@@ -85,29 +85,29 @@ public class MotionAndPenPrims {
 		if (interp.activeThread.firstTime) {
 			interp.startTimer(interp.numarg(b, 0));
 			interp.redraw();
-			app.runtime.motorOn();
+			app.robotCommunicator.motorOn();
 		} else if (interp.checkTimer())
-			app.runtime.motorOff();
+			app.robotCommunicator.motorOff();
 	}
 	
 	private function primMotorOn(b:Block):void {
-		app.runtime.motorOn();
+		app.robotCommunicator.motorOn();
 	}
 	
 	private function primMotorOff(b:Block):void {
-		app.runtime.motorOff(); 
+		app.robotCommunicator.motorOff();
 	}
 	
 	private function primMotorDirection(b:Block):void {
 		var direction:String = interp.arg(b, 0);
 		if (direction == "this way")
-			app.runtime.goForward();
+			app.robotCommunicator.goForward();
 		else if (direction == "that way") 
-			app.runtime.goBack();
+			app.robotCommunicator.goBack();
 		else if (direction == "left")
-			app.runtime.turnLeft();
+			app.robotCommunicator.turnLeft();
 		else if (direction == "right") 
-			app.runtime.turnRight();
+			app.robotCommunicator.turnRight();
 	}
 	//end
 	

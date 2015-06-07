@@ -3,11 +3,9 @@
  */
 package connectors {
 
-TARGET::android {
     import com.as3breeze.air.ane.android.Bluetooth;
     import com.as3breeze.air.ane.android.events.BluetoothEvent;
     import com.as3breeze.air.ane.android.events.BluetoothScanEvent;
-}
 
 public class AndroidConnector implements IConnector {
     public const SUCCESSFUL:int = 0;

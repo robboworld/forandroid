@@ -120,7 +120,7 @@ public class Interpreter {
 			if ((threads[i].topBlock == b) && (threads[i].target == targetObj)) {
 				wasRunning = true;
 				if (threads[i].block.op == "turnMotorOnSecs:")//if current block turnMotorOnSecs we must stop robot
-					app.runtime.motorOff();
+					app.robotCommunicator.motorOff();
 			} else {
 				newThreads.push(threads[i]);
 			}

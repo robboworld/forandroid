@@ -38,7 +38,6 @@ TARGET::android {
 	import flash.system.System;
 	import flash.text.TextField;
 	import flash.utils.ByteArray;
-	import flash.utils.getTimer;
 	import flash.utils.setTimeout;
 	
 	import blocks.Block;
@@ -94,94 +93,9 @@ public class ScratchRuntime {
 		If connection with robot isn't set up, all commands are executed as usually,
 		but 'sendToRobot' sends nothing.
 	*/
-	
-	//data and function for robot, sorry for holy shit code
-	private const INTERVAL_SEND:int = 100;//in ms
-	private const MOTOR1_REVERSE_BIT:int = 5;
-	private const MOTOR2_REVERSE_BIT:int = 6;
-	private const MOTOR_ON_BIT:int = 7;
-	private const DEFAULT_POWER:int = (1<<0) + (1<<2) + (1<<4);//in firmware is multiplied by 4 and is set to 100 actually//CHANGE
-	public var maskSend:int = (0<<7) | (3<<5) | DEFAULT_POWER;//motorOn | isReverse1 isReverse2 | motorPower(in firmware this value must be equal 100=25*4)
-	
-	private var analogs:Array = [0, 0, 0, 0, 0, 0];
-	public function resetMask():void {
-		maskSend = (0<<7) | (3<<5) | DEFAULT_POWER;
-	}
-	
-	public function getAnalog(c:int):int {
-		return analogs[c];
-	}
-	
-	public function sendToRobot():Boolean {
-		if (app.device != null && app.device.isConnected() && app.isActive)  {
-			lastSend = getTimer();
-			return app.device.sendByte(maskSend);
-		}
-		return false;
-	}
-	
-	
-	public function connected():Boolean {
-		return app.device != null && app.device.isConnected();
-	}
-	
-	public function turnLeft():void {
-		if (!connected())
-			return;
-		maskSend = buildMask(isMotorOn(), true, false);
-		if (isMotorOn())
-			sendToRobot();
-	}
-	
-	public function turnRight():void {
-		if (!connected())
-			return;
-		maskSend = buildMask(isMotorOn(), false, true);	
-		if (isMotorOn())
-			sendToRobot();
-	}
-	
-	public function goForward():void {
-		if (!connected())
-			return;
-		maskSend = buildMask(isMotorOn(), true, true);
-		if (isMotorOn())
-			sendToRobot();
-	}
-	
-	public function goBack():void {
-		if (!connected())
-			return;
-		maskSend = buildMask(isMotorOn(), false, false);
-		if (isMotorOn())
-			sendToRobot();
-	}
-	
-	public function motorOn():void {
-		if (!isMotorOn() && connected()) {
-			maskSend ^= 1<<MOTOR_ON_BIT;
-			sendToRobot();
-		}
-	}
-	
-	public function motorOff():void {
-		if (isMotorOn() && connected()) {
-			maskSend ^= 1<<MOTOR_ON_BIT;
-			sendToRobot();
-		}
-	}
-	
-	public function isMotorOn():Boolean {
-		return ((maskSend>>MOTOR_ON_BIT)&1) == 1;
-	}
-	
-	private function buildMask(isOn:Boolean, isRev1:Boolean, isRev2:Boolean):int {
-		var bitOn:int = (isOn ? 1 : 0);
-		var bitRev1:int = (isRev1 ? 1 : 0);
-		var bitRev2:int = (isRev2 ? 1 : 0);
-		return (bitOn<<MOTOR_ON_BIT) | (bitRev1<<MOTOR1_REVERSE_BIT) | (bitRev2<<MOTOR2_REVERSE_BIT) | DEFAULT_POWER;
-	}
-	
+
+    public var analogs:Array = [0, 0, 0, 0, 0, 0];
+
 	//runtime functions
 	public function ScratchRuntime(app:Scratch, interp:Interpreter) {
 		this.app = app;
@@ -193,82 +107,16 @@ public class ScratchRuntime {
 	// -----------------------------
 	// Running and stopping
 	//------------------------------
-	
-	public var lastSend:int = 0;
-	public var cnt:int = 0;
-	
+
 	///my shit
-	private function toBit(a:int):String {
-		var ret:String = "";
-		for (var i:int=7; i >= 0; --i)
-			if ((a>>i)&1) ret += "1";
-			else ret += "0";
-		return ret;
-	}
-	
-	private function fromBit(s:String):int {
-		var ret:int = 0;
-		for (var i:uint = 0; i < s.length; ++i)
-			if (s.charAt(i) == '1')
-				ret += 1<<(s.length - i - 1);
-		return ret;
-	}
-	
+
 	public function resetAnalogs():void {
 		for (var i:int = 0; i < analogs.length; ++i) {
 			analogs[i] = 0;
 			app.setAnalogText(i, '0');
 		}
 	}
-	
-	private var previousData:String = "";
 
-	public function addDeviceListeners():void {
-		if (app.device == null) 
-			return;
-		TARGET::android {
-			app.device.addReceiveDataListener(function (bev:BluetoothDataEvent):void {
-				var ba:String = bev.message;
-				var len:int = ba.length;
-				var cur:String = bev.message;
-
-				if (previousData.length <= cur.length && cur.substr(0, previousData.length) == previousData) {
-					previousData = cur;
-				} else if (previousData.charAt() == '1') {
-					previousData = previousData + cur;
-				} else {
-					previousData = previousData.substr(8, previousData.length - 8) + cur;
-				}
-
-				if (8 < previousData.length && (previousData.charAt() == '1' && previousData.charAt(8) == '1')) {
-					previousData = previousData.substr(8, previousData.length - 8);
-				}
-
-				//trace("len:", len, "data:", previousData);
-				if (len == 0) {
-					return;
-				}
-				var i:int = 0;
-				for (; i + 15 < previousData.length; i += 16) {
-					var channel:int = fromBit(previousData.substr(i + 1, 4));
-					if (channel >= 7 || channel == 5 || channel < 0)
-						continue;
-					if (channel == 6) channel = 5;
-					var value:int = fromBit(previousData.substr(i + 5, 3).concat(previousData.substr(i + 9, 7)));
-					analogs[channel] = value;
-					app.setAnalogText(channel, '' + value);
-				}
-				previousData = previousData.substr(i, previousData.length - i);
-				//trace("received mod = ", receivedData.length % 16);
-			});
-		}
-	}
-	
-	public function removeDeviceListeners():void {
-		if (app.device != null)
-			app.device.removeAllListeners();
-	}
-	
 	public function stepRuntime():void {
 		if (projectToInstall != null && app.isOffline) {
 			installProject(projectToInstall);
@@ -291,9 +139,7 @@ public class ScratchRuntime {
 		app.stagePane.commitPenStrokes();
 		
 		//send to robot
-		
-		if (getTimer() - lastSend > INTERVAL_SEND) //if programm doesn't send data to a robot on this iteration yet
-			sendToRobot();
+		app.robotCommunicator.keepAlive();
 	}
 //-------- recording test ---------
 	public var recording:Boolean;
@@ -449,6 +295,7 @@ public class ScratchRuntime {
 		return !app.extensionManager.isInternal(extName);
 	}
 
+	true // LOLKA
 	public function hasGraphicEffects():Boolean {
 		var found:Boolean = false;
 		allStacksAndOwnersDo(function (stack:Block, target:ScratchObj):void {
@@ -462,6 +309,7 @@ public class ScratchRuntime {
 		return found;
 	}
 
+	true // LOLKA
 	private function isGraphicEffectBlock(b:Block):Boolean {
 		return ('op' in b && (b.op == 'changeGraphicEffect:by:' || b.op == 'setGraphicEffect:to:') &&
 				('argValue' in b.args[0]) && b.args[0].argValue != 'ghost' && b.args[0].argValue != 'brightness');
@@ -533,6 +381,7 @@ public class ScratchRuntime {
 				(('whenSensorGreaterThan' == op) && ('video motion' == interp.arg(b, 0)))) {
 					app.libraryPart.showVideoButton();
 			}
+			//true // LOLKA
 			 {
 				// Should we go 3D?
 				if(isGraphicEffectBlock(b))
@@ -639,6 +488,7 @@ public class ScratchRuntime {
 		if (app.stagePane != null) stopAll();
 		if (app.scriptsPane) app.scriptsPane.viewScriptsFor(null);
 
+		//true // LOLKA
 		{ if(app.isIn3D) app.render3D.setStage(project, project.penLayer); }
 
 		for each (var obj:ScratchObj in project.allObjects()) {
@@ -662,9 +512,11 @@ public class ScratchRuntime {
 		}
 		app.extensionManager.step();
 		app.projectLoaded();
+		//true // LOLKA
 		{ checkForGraphicEffects(); }
 	}
 
+	true // LOLKA
 	public function checkForGraphicEffects():void {
 		if(hasGraphicEffects()) app.go3D();
 		else app.go2D();

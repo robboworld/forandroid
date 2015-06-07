@@ -217,6 +217,7 @@ public class BlockMenus implements DragClient {
 	private function setBlockArg(selection:*):void {
 		if (blockArg != null) blockArg.setArgValue(selection);
 		Scratch.app.setSaveNeeded();
+		//true // LOLKA
 		{ Scratch.app.runtime.checkForGraphicEffects(); }
 	}
 

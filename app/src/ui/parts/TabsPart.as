@@ -66,8 +66,8 @@ public class TabsPart extends UIPart {
 		var label:String = ((app.viewedObj() != null) && app.viewedObj().isStage) ? 'Backdrops' : 'Costumes';
 		label = Translator.map(label);
 		imagesTab.setImage(makeTabImg(label, true), makeTabImg(label, false));
-		if (app.device != null && app.device.isConnected())
-			connectionStatus.text = " " + Translator.map("Connected to ") + app.device.getName();
+		if (app.robotCommunicator != null && app.robotCommunicator.getName() != null)
+			connectionStatus.text = " " + Translator.map("Connected to ") + app.robotCommunicator.getName();
 		else
 			connectionStatus.text = "";
 		fixLayout();

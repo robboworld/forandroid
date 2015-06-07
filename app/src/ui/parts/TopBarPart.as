@@ -82,7 +82,9 @@ public class TopBarPart extends UIPart {
 		if (Scratch.app) {
 			Scratch.app.showFileMenu(Menu.dummyButton());
 			Scratch.app.showEditMenu(Menu.dummyButton());
-			Scratch.app.showDevicesMenu(Menu.dummyButton());
+            TARGET::android {
+                Scratch.app.showDevicesMenu(Menu.dummyButton());
+            }
 			Scratch.app.showHelpMenu(Menu.dummyButton());
 			Scratch.app.donate(Menu.dummyButton());
 		}
@@ -93,7 +95,9 @@ public class TopBarPart extends UIPart {
 		if (fileMenu.parent) {
 			removeChild(fileMenu);
 			removeChild(editMenu);
-			removeChild(devicesMenu);
+			TARGET::android {
+                removeChild(devicesMenu);
+            }
 			removeChild(helpMenu);
 			ANDROID::enableDonationButton  {
 				removeChild(donateMenu);
@@ -134,10 +138,13 @@ public class TopBarPart extends UIPart {
 		editMenu.y = buttonY;
 		nextX += editMenu.width + buttonSpace;
 
-		//added Devices Menu
-		devicesMenu.x = nextX;
-		devicesMenu.y = buttonY;
-		nextX += devicesMenu.width + buttonSpace;
+
+        TARGET::android {
+            //added Devices Menu
+            devicesMenu.x = nextX;
+            devicesMenu.y = buttonY;
+            nextX += devicesMenu.width + buttonSpace;
+        }
 
 		// add Help menu
 		helpMenu.x = nextX;
@@ -174,7 +181,9 @@ public class TopBarPart extends UIPart {
 	protected function addTextButtons():void {
 		addChild(fileMenu = makeMenuButton('File', app.showFileMenu, true));
 		addChild(editMenu = makeMenuButton('Edit', app.showEditMenu, true));
-		addChild(devicesMenu = makeMenuButton('Devices', app.showDevicesMenu, true));
+        TARGET::android {
+            addChild(devicesMenu = makeMenuButton('Devices', app.showDevicesMenu, true));
+        }
 		addChild(helpMenu = makeMenuButton('Help', app.showHelpMenu, true));
 		ANDROID::enableDonationButton  {
 			addChild(donateMenu = makeMenuButton('Donate', app.donate, false));
