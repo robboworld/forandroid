@@ -88,7 +88,7 @@ public class SensingPrims {
 	private function primAnalog(b:Block):int {
 		var a:String = interp.arg(b, 0);
 		var c:int = a.charCodeAt(a.length - 1) - 48;
-		return app.runtime.getAnalog(c);
+		return app.runtime.analogs[c];
 	}
 	
 	private function primTouching(b:Block):Boolean {

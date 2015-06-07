@@ -1,12 +1,11 @@
 /**
  * You must implement {@link connectors.IDevice} here for different platforms.
  * Each implementation must be accompanied by compile time variables, for example
- * TARGET::android, TARGET::windows, TARGET::linux, TARGET::osx.
+ * TARGET::android, TARGET::desktop.
  */
 
 package connectors
 {
-TARGET::android {
     //Implementation for Android
     import com.as3breeze.air.ane.android.BluetoothDevice;
     import com.as3breeze.air.ane.android.events.BluetoothDataEvent;
@@ -76,5 +75,4 @@ TARGET::android {
             return device.name;
         }
     }
-}
 }

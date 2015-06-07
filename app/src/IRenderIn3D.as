@@ -28,6 +28,7 @@ import flash.display.DisplayObject;
 import flash.display.Sprite;
 import flash.events.Event;
 
+// true // LOLKA
 public interface IRenderIn3D {
 	function setStage(stage:Sprite, penLayer:DisplayObject):void;
 	function getUIContainer():Sprite;

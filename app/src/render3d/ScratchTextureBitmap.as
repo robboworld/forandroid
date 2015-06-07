@@ -19,6 +19,7 @@
 
 package render3d {
 import flash.display.BitmapData;
+//true // LOLKA
 public class ScratchTextureBitmap extends BitmapData
 {{
 

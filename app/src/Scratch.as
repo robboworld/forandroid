@@ -111,10 +111,7 @@ import util.UnimplementedError;
 import watchers.ListWatcher;
 
 TARGET::android {
-	import com.as3breeze.air.ane.android.events.BluetoothDeviceEvent;
-}
-
-TARGET::android {
+    import com.as3breeze.air.ane.android.events.BluetoothDeviceEvent;
 	import pl.mateuszmackowiak.nativeANE.dialogs.NativeAlertDialog;
 	import pl.mateuszmackowiak.nativeANE.dialogs.NativeListDialog;
 	import pl.mateuszmackowiak.nativeANE.dialogs.NativeProgressDialog;
@@ -157,7 +154,7 @@ public class Scratch extends Sprite {
 	public var debugOpCmd:String = '';
 	
 	public var connector:IConnector;
-	public var device:IDevice = null;
+    public var robotCommunicator:IRobotCommunicator = null;
 
 	protected var autostart:Boolean;
 	private var viewedObject:ScratchObj;
@@ -192,8 +189,6 @@ public class Scratch extends Sprite {
 	/* Default directory for projects */
 	private static const scratchProjectsDirectory:File = File.userDirectory.resolvePath("scratch-projects");
 	private static var currentProjectsDirectory:File;
-
-	public var isActive:Boolean = false;
 	
 	public function Scratch() {
 		loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
@@ -255,9 +250,10 @@ public class Scratch extends Sprite {
 		TARGET::android {
 			connector = new AndroidConnector();
 		}
-		TARGET::desktop {
-			connector = new DesktopConnector();
-		}
+
+        TARGET::desktop {
+            robotCommunicator = new DesktopRobotCommunicator(refreshAnalogs);
+        }
 		
 		//Analyze.collectAssets(0, 119110);
 		//Analyze.checkProjects(56086, 64220);
@@ -266,14 +262,21 @@ public class Scratch extends Sprite {
 		// make stage small at startup
 		toggleSmallStage();
 	}
-	
+
+
+    function refreshAnalogs(data:Array):void {
+        for (var i:int = 0; i < data.length; ++i) {
+            runtime.analogs[i] = data[i];
+            setAnalogText(i, data[i]);
+        }
+    }
+
 	private function onResume(event:Event):void {
-		isActive = true;
+        robotCommunicator.setActive(true);
 	}
 	
 	private function onPause(event:Event):void {
-		
-		isActive = false;
+        robotCommunicator.setActive(false);
 		runtime.resetAnalogs();
 		var projectFileName:String = projectName();
 		if (projectFileName.length == 0 || projectFileName == ' ') 
@@ -367,6 +370,7 @@ public class Scratch extends Sprite {
 	public function loadProjectFailed():void {}
 
 	protected function checkFlashVersion():void {
+		//true // LOLKA
 		{
 			if (Capabilities.playerType != "Desktop" || Capabilities.version.indexOf('IOS') === 0) {
 				var versionString:String = Capabilities.version.substr(Capabilities.version.indexOf(' ') + 1);
@@ -384,6 +388,7 @@ public class Scratch extends Sprite {
 		render3D = null;
 	}
 
+	true // LOLKA
 	protected function handleRenderCallback(enabled:Boolean):void {
 		if(!enabled) {
 			go2D();
@@ -418,6 +423,7 @@ public class Scratch extends Sprite {
 		} catch (e:Error) {}
 	}
 
+	true // LOLKA
 	public function go3D():void {
 		if(!render3D || isIn3D) return;
 
@@ -428,6 +434,7 @@ public class Scratch extends Sprite {
 		isIn3D = true;
 	}
 
+	true // LOLKA
 	public function go2D():void {
 		if(!render3D || !isIn3D) return;
 
@@ -533,6 +540,7 @@ public class Scratch extends Sprite {
 
 		if (lp) fixLoadProgressLayout();
 		stagePane.updateCostume();
+		//true // LOLKA
 		{ if(isIn3D) render3D.onStageResize(); }
 	}
 
@@ -550,6 +558,7 @@ public class Scratch extends Sprite {
 //		}
 		// Handle ctrl-m and toggle 2d/3d mode
 		else if(evt.ctrlKey && evt.charCode == 109) {
+			//true // LOLKA
 			{ isIn3D ? go2D() : go3D(); }
 			evt.preventDefault();
 			evt.stopImmediatePropagation();
@@ -813,6 +822,7 @@ public class Scratch extends Sprite {
 			frameRateGraph.y = stage.stageHeight - frameRateGraphH;
 			addChild(frameRateGraph); // put in front
 		}
+		//true // LOLKA
 		 { if (isIn3D) render3D.onStageResize(); }
 	}
 
@@ -912,14 +922,6 @@ public class Scratch extends Sprite {
 	}
 	
 	//Devices menu
-	public function showDevicesMenu(b:*):void {
-		var m:Menu = new Menu(null, 'Devices', CSS.topBarColor, 28);
-		if (device != null) 
-			m.addItem('Disconnect', disconnectFromDevice);
-		else
-			m.addItem('Search devices', searchDevices);
-		m.showOnStage(stage, b.x, topBarPart.bottom() - 1);
-	}
 	
 	public function showHelpMenu(b:*):void {
 		var m:Menu = new Menu(null, 'Help', CSS.topBarColor, 28);
@@ -936,119 +938,121 @@ public class Scratch extends Sprite {
 		var urlReq:URLRequest = new URLRequest(REPORT_BUG_URL); 
 		navigateToURL(urlReq);
 	}
-	
-	protected function searchDevices():void {
-		TARGET::desktop {
-			throw new UnimplementedError("searchDevices in not implemented for desktop");
-		}
-		TARGET::android {
-			function showProgressDialog():void {
-				var p:NativeProgressDialog = new NativeProgressDialog();
-				p.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
-				p.setIndeterminate(true);
-				p.title = Translator.map("Searching for devices");//TRANSLATE
-				p.message = Translator.map("Please wait");//TRANSLATE
-				p.showSpinner();
-				progressPopup = p;
-			}
 
-			function onCloseDialog(event:NativeDialogEvent):void {
-				var m:iNativeDialog = iNativeDialog(event.target);
-				m.removeEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
-				m.dispose();
-			}
+    TARGET::android {
+        public function showDevicesMenu(b:*):void {//for Android only
+            var m:Menu = new Menu(null, 'Devices', CSS.topBarColor, 28);
+            if (robotCommunicator != null)
+                m.addItem('Disconnect', disconnectFromDevice);
+            else
+                m.addItem('Search devices', searchDevices);
+            m.showOnStage(stage, b.x, topBarPart.bottom() - 1);
+        }
 
-			var progressPopup:NativeProgressDialog;
+        protected function searchDevices():void {//for Android only
+            function showProgressDialog():void {
+                var p:NativeProgressDialog = new NativeProgressDialog();
+                p.addEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+                p.setIndeterminate(true);
+                p.title = Translator.map("Searching for devices");//TRANSLATE
+                p.message = Translator.map("Please wait");//TRANSLATE
+                p.showSpinner();
+                progressPopup = p;
+            }
 
-			var alreadyShown:Boolean = false;
+            function onCloseDialog(event:NativeDialogEvent):void {
+                var m:iNativeDialog = iNativeDialog(event.target);
+                m.removeEventListener(NativeDialogEvent.CLOSED, onCloseDialog);
+                m.dispose();
+            }
 
-			var error:int = connector.scanForVisibleDevices(
-					function ():void {
-						showProgressDialog();
-					},
+            var progressPopup:NativeProgressDialog;
 
-					function (devices:Vector.<IDevice>):void {
-						//trace("devices = " + devices);
-						var scratchNames:Vector.<Object> = new Vector.<Object>();
-						var scratchDevices:Vector.<IDevice> = new Vector.<IDevice>();
-						for each (var t:IDevice in devices) {
-							if (t.getName().substr(0, "Scratchduino".length) == "Scratchduino") {
-								scratchDevices.push(t);
-								scratchNames.push(t.getName());
-							}
-						}
-						if (scratchDevices.length != 0) {
-							var bluetoothDialog:NativeListDialog = new NativeListDialog();
-							bluetoothDialog.setTitle(Translator.map("Scratchduino devices"));
-							bluetoothDialog.dataProvider = scratchNames;
-							bluetoothDialog.buttons = Vector.<String>([Translator.map("OK"), Translator.map("Cancel")]);
-							bluetoothDialog.selectedIndex = 0;
+            var alreadyShown:Boolean = false;
 
-							bluetoothDialog.addEventListener(NativeDialogEvent.CLOSED, function (ev:Event):void {
-								var n:NativeListDialog = NativeListDialog(ev.target);
-								n.dispose();
-								device = scratchDevices[bluetoothDialog.selectedIndex];
-								trace("selected", bluetoothDialog.selectedIndex);
+            var error:int = connector.scanForVisibleDevices(
+                    function ():void {
+                        showProgressDialog();
+                    },
 
-								device.addDeviceConnectedListener(function (bev:BluetoothDeviceEvent):void {
-									trace("connected to ", device.getName());
-									runtime.addDeviceListeners();
-									device.sendByte(runtime.maskSend);
-									Toast.show(Translator.map("Connected to ") + device.getName(), Toast.LENGTH_SHORT);
-									tabsPart.refresh();
-								});
+                    function (devices:Vector.<IDevice>):void {
+                        //trace("devices = " + devices);
+                        var scratchNames:Vector.<Object> = new Vector.<Object>();
+                        var scratchDevices:Vector.<IDevice> = new Vector.<IDevice>();
+                        for each (var t:IDevice in devices) {
+                            if (t.getName().substr(0, "Scratchduino".length) == "Scratchduino") {
+                                scratchDevices.push(t);
+                                scratchNames.push(t.getName());
+                            }
+                        }
+                        if (scratchDevices.length != 0) {
+                            var bluetoothDialog:NativeListDialog = new NativeListDialog();
+                            bluetoothDialog.setTitle(Translator.map("Scratchduino devices"));
+                            bluetoothDialog.dataProvider = scratchNames;
+                            bluetoothDialog.buttons = Vector.<String>([Translator.map("OK"), Translator.map("Cancel")]);
+                            bluetoothDialog.selectedIndex = 0;
 
-								device.addDeviceConnectErrorListener(function (bev:BluetoothDeviceEvent):void {
-									disconnect();
-								});
+                            bluetoothDialog.addEventListener(NativeDialogEvent.CLOSED, function (ev:Event):void {
+                                var n:NativeListDialog = NativeListDialog(ev.target);
+                                n.dispose();
+                                var device:IDevice = scratchDevices[bluetoothDialog.selectedIndex];
+                                device.addDeviceConnectedListener(function (bev:BluetoothDeviceEvent):void {
+                                    trace("connected to ", device.getName());
+                                    robotCommunicator = new AndroidRobotCommunicator(device, refreshAnalogs);
+                                    Toast.show(Translator.map("Connected to ") + device.getName(), Toast.LENGTH_SHORT);
+                                    tabsPart.refresh();
+                                });
 
-								device.addDeviceDisconnectedListener(function (bev:BluetoothDeviceEvent):void {
-									if (device == null)
-										return;
-									var name:String = device.getName();
-									disconnect();
-									if (alreadyShown)
-										return;
-									alreadyShown = true;
-									NativeAlertDialog.showAlert(Translator.map("Lost connection to ") + name + ". " +
-											Translator.map("Make sure that Bluetooth is enabled on robot and search for devices again"),
-											Translator.map("Connection lost")).
-											addEventListener(NativeDialogEvent.CLOSED, function ():void {
-												alreadyShown = false;
-											});
-								});
+                                device.addDeviceConnectErrorListener(function (bev:BluetoothDeviceEvent):void {
+                                    disconnect();
+                                });
 
-								if (!device.isConnected())
-									device.connect();
+                                device.addDeviceDisconnectedListener(function (bev:BluetoothDeviceEvent):void {
+                                    if (device == null)
+                                        return;
+                                    var name:String = device.getName();
+                                    disconnect();
+                                    if (alreadyShown)
+                                        return;
+                                    alreadyShown = true;
+                                    NativeAlertDialog.showAlert(Translator.map("Lost connection to ") + name + ". " +
+                                            Translator.map("Make sure that Bluetooth is enabled on robot and search for devices again"),
+                                            Translator.map("Connection lost")).
+                                            addEventListener(NativeDialogEvent.CLOSED, function ():void {
+                                                alreadyShown = false;
+                                            });
+                                });
 
-							});
+                                if (!device.isConnected())
+                                    device.connect();
 
-							progressPopup.dispose();
+                            });
 
-							bluetoothDialog.setCancelable(true);
-							bluetoothDialog.show();
-						} else {
-							progressPopup.dispose();
-							NativeAlertDialog.showAlert(Translator.map("There are no devices found. Make sure that Bluetooth is enabled on robot"), Translator.map("No devices found"));
-						}
-					}
-			);
-		}
-	}
+                            progressPopup.dispose();
 
-	public function disconnect():void {
-		if (device != null) {
-			device.removeAllListeners();
-			device.disconnect();
-			runtime.resetAnalogs();
-			runtime.resetMask();
-			device = null;
-			tabsPart.refresh();
-		}
-	}
-	protected function disconnectFromDevice():void {
-		disconnect();
-	}
+                            bluetoothDialog.setCancelable(true);
+                            bluetoothDialog.show();
+                        } else {
+                            progressPopup.dispose();
+                            NativeAlertDialog.showAlert(Translator.map("There are no devices found. Make sure that Bluetooth is enabled on robot"), Translator.map("No devices found"));
+                        }
+                    }
+            );
+        }
+
+        public function disconnect():void {
+            runtime.resetAnalogs();
+            tabsPart.refresh();
+            if (robotCommunicator != null) {
+                robotCommunicator.finishSession();
+                robotCommunicator = null;
+            }
+        }
+
+        protected function disconnectFromDevice():void {
+            disconnect();
+        }
+    }
 	
 	protected function editBlockColors():void {
 		var d:DialogBox = new DialogBox();

@@ -264,6 +264,7 @@ public class ScratchObj extends Sprite {
 	}
 
 	protected function updateEffects():void {
+		//true // LOLKA
 		{
 			if((parent && parent is ScratchStage) || this is ScratchStage) {
 				if(parent is ScratchStage)
@@ -289,6 +290,7 @@ public class ScratchObj extends Sprite {
 		img.transform.colorTransform = clearColorTrans;
 		clearCachedBitmap();
 
+		//true // LOLKA
 		{
 			if (parent && parent is ScratchStage) {
 				(parent as ScratchStage).updateSpriteEffects(this, null);
