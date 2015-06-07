@@ -265,7 +265,6 @@ public class ScratchStage extends ScratchObj {
 	public function scrollUp(n:Number):void { yScroll += n; updateImage() }
 
 	public function getUILayer():Sprite {
-		//true // LOLKA
 		 {
 			if(Scratch.app.isIn3D) return Scratch.app.render3D.getUIContainer();
 		}
@@ -274,7 +273,6 @@ public class ScratchStage extends ScratchObj {
 
 	override protected function updateImage():void {
 		super.updateImage();
-		//true // LOLKA
 		{
 			if (Scratch.app.isIn3D)
 				Scratch.app.render3D.getUIContainer().transform.matrix = transform.matrix.clone();
@@ -351,7 +349,6 @@ public class ScratchStage extends ScratchObj {
 			} else {
 				videoImage.bitmapData.draw(video);
 			}
-			//true // LOLKA
 			{ if(Scratch.app.isIn3D) Scratch.app.render3D.updateRender(videoImage); }
 		}
 		cachedBitmapIsCurrent = false;
@@ -396,7 +393,6 @@ public class ScratchStage extends ScratchObj {
 			s.visible = wasVisible;
 		}
 
-		//true // LOLKA
 		if (true) {
 			if (Scratch.app.isIn3D) {
 				var bmd:BitmapData = getBitmapOfSprite(s, stampBounds);
@@ -426,7 +422,6 @@ public class ScratchStage extends ScratchObj {
 		bounds.width = b.width; bounds.height = b.height; bounds.x = b.x; bounds.y = b.y;
 		if(!Scratch.app.render3D || s.width < 1 || s.height < 1) return null;
 
-		//true // LOLKA
 		if (true) {
 			var ghost:Number = s.filterPack.getFilterSetting('ghost');
 			var oldBright:Number = s.filterPack.getFilterSetting('brightness');
@@ -483,7 +478,6 @@ public class ScratchStage extends ScratchObj {
 		bm.fillRect(bm.rect, 0);
 		newPenStrokes.graphics.clear();
 		penActivity = false;
-		//true // LOLKA
 		{ if(Scratch.app.isIn3D) Scratch.app.render3D.updateRender(penLayer); }
 	}
 
@@ -492,7 +486,6 @@ public class ScratchStage extends ScratchObj {
 		penLayer.bitmapData.draw(newPenStrokes);
 		newPenStrokes.graphics.clear();
 		penActivity = false;
-		//true // LOLKA
 		{ if(Scratch.app.isIn3D) Scratch.app.render3D.updateRender(penLayer); }
 	}
 
@@ -540,7 +533,6 @@ public class ScratchStage extends ScratchObj {
 		return bm;
 	}
 
-	true // LOLKA
 	public function updateSpriteEffects(spr:DisplayObject, effects:Object):void {
 		if(Scratch.app.isIn3D) Scratch.app.render3D.updateFilters(spr, effects);
 	}
@@ -552,7 +544,6 @@ public class ScratchStage extends ScratchObj {
 		var mask:uint = 0x00F8F8F0; //0xF0F8F8F0;
 		if(Scratch.app.isIn3D) {
 			var b:Rectangle;
-			//true // LOLKA
 			 {
 				b = s.currentCostume().bitmap ? s.img.getChildAt(0).getBounds(s) : s.getVisibleBounds(s);
 				bm1 = Scratch.app.render3D.getOtherRenderedChildren(s, 1);
@@ -602,7 +593,6 @@ public class ScratchStage extends ScratchObj {
 	}
 
 	public function updateRender(dispObj:DisplayObject, renderID:String = null, renderOpts:Object = null):void {
-		//true // LOLKA
 		{
 			if (Scratch.app.isIn3D) Scratch.app.render3D.updateRender(dispObj, renderID, renderOpts);
 		}
@@ -615,7 +605,6 @@ public class ScratchStage extends ScratchObj {
 		if (videoImage) videoImage.visible = false;
 
 		// Get a screenshot of the stage
-		//true // LOLKA
 		if (true) {
 			if(Scratch.app.isIn3D) Scratch.app.render3D.getRender(bm);
 			else bm.draw(this);

@@ -25,7 +25,6 @@ import flash.display.Sprite;
  *   A display object container which renders in 3D instead
  *   @author Shane M. Clements, shane.m.clements@gmail.com
  */
-//true // LOLKA
 public class DisplayObjectContainerIn3D extends Sprite implements IRenderIn3D {/*SCRATCH::allow3d*/{
 
 	import com.adobe.utils.*;
@@ -1728,7 +1727,6 @@ internal final class Dbg {
 		catch (e:Error) {
 			memoryHash = String(e).replace(/.*([@|\$].*?) to .*$/gi, '$1');
 		}
-		//true // LOLKA
 		return "PZDC zaebalsya includit'";//flash.utils.getQualifiedClassName(obj) + memoryHash;
 	}
 }

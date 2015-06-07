@@ -370,7 +370,6 @@ public class Scratch extends Sprite {
 	public function loadProjectFailed():void {}
 
 	protected function checkFlashVersion():void {
-		//true // LOLKA
 		{
 			if (Capabilities.playerType != "Desktop" || Capabilities.version.indexOf('IOS') === 0) {
 				var versionString:String = Capabilities.version.substr(Capabilities.version.indexOf(' ') + 1);
@@ -388,7 +387,6 @@ public class Scratch extends Sprite {
 		render3D = null;
 	}
 
-	true // LOLKA
 	protected function handleRenderCallback(enabled:Boolean):void {
 		if(!enabled) {
 			go2D();
@@ -423,7 +421,6 @@ public class Scratch extends Sprite {
 		} catch (e:Error) {}
 	}
 
-	true // LOLKA
 	public function go3D():void {
 		if(!render3D || isIn3D) return;
 
@@ -434,7 +431,6 @@ public class Scratch extends Sprite {
 		isIn3D = true;
 	}
 
-	true // LOLKA
 	public function go2D():void {
 		if(!render3D || !isIn3D) return;
 
@@ -540,7 +536,6 @@ public class Scratch extends Sprite {
 
 		if (lp) fixLoadProgressLayout();
 		stagePane.updateCostume();
-		//true // LOLKA
 		{ if(isIn3D) render3D.onStageResize(); }
 	}
 
@@ -558,7 +553,6 @@ public class Scratch extends Sprite {
 //		}
 		// Handle ctrl-m and toggle 2d/3d mode
 		else if(evt.ctrlKey && evt.charCode == 109) {
-			//true // LOLKA
 			{ isIn3D ? go2D() : go3D(); }
 			evt.preventDefault();
 			evt.stopImmediatePropagation();
@@ -822,7 +816,6 @@ public class Scratch extends Sprite {
 			frameRateGraph.y = stage.stageHeight - frameRateGraphH;
 			addChild(frameRateGraph); // put in front
 		}
-		//true // LOLKA
 		 { if (isIn3D) render3D.onStageResize(); }
 	}
 

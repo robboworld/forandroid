@@ -48,7 +48,6 @@ public class Translator {
 			if (!data) return;
 			for each (var line:String in data.split('\n')) {
 				var fields:Array = line.split(',');
-				// LOLKA-TRALKA
 				if (fields.length >= 2) {
 					languages.push([fields[0], fields[1]]);
 				}
@@ -132,7 +131,6 @@ public class Translator {
 		skipBOM(bytes);
 		var lines:Array = [];
 		while (bytes.bytesAvailable > 0) {
-			// LOLKA-TRALKA
 			var s:String = nextLine(bytes);
 			if ((s.length > 0) && (s.charAt(0) != '#')) lines.push(s);
 		}

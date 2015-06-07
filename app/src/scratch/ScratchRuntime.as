@@ -295,7 +295,6 @@ public class ScratchRuntime {
 		return !app.extensionManager.isInternal(extName);
 	}
 
-	true // LOLKA
 	public function hasGraphicEffects():Boolean {
 		var found:Boolean = false;
 		allStacksAndOwnersDo(function (stack:Block, target:ScratchObj):void {
@@ -309,7 +308,6 @@ public class ScratchRuntime {
 		return found;
 	}
 
-	true // LOLKA
 	private function isGraphicEffectBlock(b:Block):Boolean {
 		return ('op' in b && (b.op == 'changeGraphicEffect:by:' || b.op == 'setGraphicEffect:to:') &&
 				('argValue' in b.args[0]) && b.args[0].argValue != 'ghost' && b.args[0].argValue != 'brightness');
@@ -381,7 +379,6 @@ public class ScratchRuntime {
 				(('whenSensorGreaterThan' == op) && ('video motion' == interp.arg(b, 0)))) {
 					app.libraryPart.showVideoButton();
 			}
-			//true // LOLKA
 			 {
 				// Should we go 3D?
 				if(isGraphicEffectBlock(b))
@@ -488,7 +485,6 @@ public class ScratchRuntime {
 		if (app.stagePane != null) stopAll();
 		if (app.scriptsPane) app.scriptsPane.viewScriptsFor(null);
 
-		//true // LOLKA
 		{ if(app.isIn3D) app.render3D.setStage(project, project.penLayer); }
 
 		for each (var obj:ScratchObj in project.allObjects()) {
@@ -512,11 +508,9 @@ public class ScratchRuntime {
 		}
 		app.extensionManager.step();
 		app.projectLoaded();
-		//true // LOLKA
 		{ checkForGraphicEffects(); }
 	}
 
-	true // LOLKA
 	public function checkForGraphicEffects():void {
 		if(hasGraphicEffects()) app.go3D();
 		else app.go2D();
