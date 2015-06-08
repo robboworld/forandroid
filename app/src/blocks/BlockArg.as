@@ -44,10 +44,7 @@ package blocks {
 	import flash.events.MouseEvent;
 	import flash.events.TextEvent;
 	import flash.filters.BevelFilter;
-	import flash.text.SoftKeyboardType;
-	import flash.text.TextField;
-	import flash.text.TextFieldAutoSize;
-	import flash.text.TextFieldType;
+	import flash.text.*;
 
 TARGET::android {
 	import pl.mateuszmackowiak.nativeANE.dialogs.NativeTextInputDialog;

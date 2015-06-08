@@ -45,9 +45,11 @@ import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.TextEvent;
 import flash.events.UncaughtErrorEvent;
-import flash.filesystem.File;
-import flash.filesystem.FileMode;
-import flash.filesystem.FileStream;
+TARGET::android {
+	import flash.filesystem.File;
+	import flash.filesystem.FileMode;
+	import flash.filesystem.FileStream;
+}
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.net.FileReference;
@@ -57,10 +59,7 @@ import flash.net.URLRequest;
 import flash.net.navigateToURL;
 import flash.system.Capabilities;
 import flash.system.System;
-import flash.text.SoftKeyboardType;
-import flash.text.TextField;
-import flash.text.TextFieldAutoSize;
-import flash.text.TextFormat;
+import flash.text.*;
 import flash.utils.ByteArray;
 import flash.utils.getTimer;
 
@@ -123,145 +122,147 @@ TARGET::android {
 	import pl.mateuszmackowiak.nativeANE.notifications.Toast;
 }
 public class Scratch extends Sprite {
-	// Version
-	public static const versionString:String = 'v426';
-	private static const REPORT_BUG_URL:String = 'https://github.com/scratchduino/forandroid/blob/master/README.md';
+    // Version
+    public static const versionString:String = 'v426';
+    private static const REPORT_BUG_URL:String = 'https://github.com/scratchduino/forandroid/blob/master/README.md';
     private static const DONATE_URL:String = 'https://play.google.com/store/apps/details?id=air.ru.scratchduino.android.appdonate';
-	public static var app:Scratch; // static reference to the app, used for debugging
+    public static var app:Scratch; // static reference to the app, used for debugging
 
-	// Display modes
-	public var editMode:Boolean; // true when project editor showing, false when only the player is showing
-	public var isOffline:Boolean; // true when running as an offline (i.e. stand-alone) app
-	public var isSmallPlayer:Boolean; // true when displaying as a scaled-down player (e.g. in search results)
-	public var stageIsContracted:Boolean; // true when the stage is half size to give more space on small screens
-	public var isIn3D:Boolean;
-	public var render3D:IRenderIn3D;
-	public var isArmCPU:Boolean;
-	public var jsEnabled:Boolean = false; // true when the SWF can talk to the webpage
+    // Display modes
+    public var editMode:Boolean; // true when project editor showing, false when only the player is showing
+    public var isOffline:Boolean; // true when running as an offline (i.e. stand-alone) app
+    public var isSmallPlayer:Boolean; // true when displaying as a scaled-down player (e.g. in search results)
+    public var stageIsContracted:Boolean; // true when the stage is half size to give more space on small screens
+    public var isIn3D:Boolean;
+    public var render3D:IRenderIn3D;
+    public var isArmCPU:Boolean;
+    public var jsEnabled:Boolean = false; // true when the SWF can talk to the webpage
 
-	// Runtime
-	public var runtime:ScratchRuntime;
-	public var interp:Interpreter;
-	public var extensionManager:ExtensionManager;
-	public var server:Server;
-	public var gh:GestureHandler;
-	public var projectID:String = '';
-	public var projectOwner:String = '';
-	public var projectIsPrivate:Boolean;
-	public var oldWebsiteURL:String = '';
-	public var loadInProgress:Boolean;
-	public var debugOps:Boolean = false;
-	public var debugOpCmd:String = '';
-	
-	public var connector:IConnector;
+    // Runtime
+    public var runtime:ScratchRuntime;
+    public var interp:Interpreter;
+    public var extensionManager:ExtensionManager;
+    public var server:Server;
+    public var gh:GestureHandler;
+    public var projectID:String = '';
+    public var projectOwner:String = '';
+    public var projectIsPrivate:Boolean;
+    public var oldWebsiteURL:String = '';
+    public var loadInProgress:Boolean;
+    public var debugOps:Boolean = false;
+    public var debugOpCmd:String = '';
+
+    public var connector:IConnector;
     public var robotCommunicator:IRobotCommunicator = null;
 
-	protected var autostart:Boolean;
-	private var viewedObject:ScratchObj;
-	private var lastTab:String = 'scripts';
-	protected var wasEdited:Boolean; // true if the project was edited and autosaved
-	private var _usesUserNameBlock:Boolean = false;
-	protected var languageChanged:Boolean; // set when language changed
+    protected var autostart:Boolean;
+    private var viewedObject:ScratchObj;
+    private var lastTab:String = 'scripts';
+    protected var wasEdited:Boolean; // true if the project was edited and autosaved
+    private var _usesUserNameBlock:Boolean = false;
+    protected var languageChanged:Boolean; // set when language changed
 
-	// UI Elements
-	public var playerBG:Shape;
-	public var palette:BlockPalette;
-	public var scriptsPane:ScriptsPane;
-	public var stagePane:ScratchStage;
-	public var mediaLibrary:MediaLibrary;
-	public var lp:LoadProgress;
-	public var cameraDialog:CameraDialog;
+    // UI Elements
+    public var playerBG:Shape;
+    public var palette:BlockPalette;
+    public var scriptsPane:ScriptsPane;
+    public var stagePane:ScratchStage;
+    public var mediaLibrary:MediaLibrary;
+    public var lp:LoadProgress;
+    public var cameraDialog:CameraDialog;
 
-	// UI Parts
-	public var libraryPart:LibraryPart;
-	protected var topBarPart:TopBarPart;
-	protected var stagePart:StagePart;
-	private var tabsPart:TabsPart;
-	protected var scriptsPart:ScriptsPart;
-	public var imagesPart:ImagesPart;
-	public var soundsPart:SoundsPart;
-	
-	public var scratchBoardPart:ScratchBoardPart;
-	public const tipsBarClosedWidth:int = 17;
-	
-	public static var isShowingTextInputDialog:Boolean;
+    // UI Parts
+    public var libraryPart:LibraryPart;
+    protected var topBarPart:TopBarPart;
+    protected var stagePart:StagePart;
+    private var tabsPart:TabsPart;
+    protected var scriptsPart:ScriptsPart;
+    public var imagesPart:ImagesPart;
+    public var soundsPart:SoundsPart;
 
-	/* Default directory for projects */
-	private static const scratchProjectsDirectory:File = File.userDirectory.resolvePath("scratch-projects");
-	private static var currentProjectsDirectory:File;
-	
-	public function Scratch() {
-		loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
-		app = this;
+    public var scratchBoardPart:ScratchBoardPart;
+    public const tipsBarClosedWidth:int = 17;
 
-		// This one must finish before most other queries can start, so do it separately
-		determineJSAccess();
-	}
+    public static var isShowingTextInputDialog:Boolean;
 
-	protected function initialize():void {
-		isOffline = loaderInfo.url.indexOf('http:') == -1;
-		checkFlashVersion();
-		initServer();
-		
-		isShowingTextInputDialog = false;
+    /* Default directory for projects */
+    TARGET::android {
+        private static const scratchProjectsDirectory:File = File.userDirectory.resolvePath("scratch-projects");
+        private static var currentProjectsDirectory:File;
+    }
 
-		stage.align = StageAlign.TOP_LEFT;
-		stage.scaleMode = StageScaleMode.NO_SCALE;
-		
-		stage.frameRate = 30;
-		
-		Block.setFonts(10, 9, true, 0); // default font sizes
-		Block.MenuHandlerFunction = BlockMenus.BlockMenuHandler;
-		CursorTool.init(this);
-		app = this;
+    public function Scratch() {
+        loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
+        app = this;
 
-		stagePane = new ScratchStage();
-		gh = new GestureHandler(this, (loaderInfo.parameters['inIE'] == 'true'));
-		initInterpreter();
-		initRuntime();
-		initExtensionManager();
-		Translator.initializeLanguageList();
+        // This one must finish before most other queries can start, so do it separately
+        determineJSAccess();
+    }
 
-		playerBG = new Shape(); // create, but don't add
-		addParts();
+    protected function initialize():void {
+        isOffline = loaderInfo.url.indexOf('http:') == -1;
+        checkFlashVersion();
+        initServer();
 
-		stage.addEventListener(MouseEvent.MOUSE_DOWN, gh.mouseDown);
-		stage.addEventListener(MouseEvent.MOUSE_MOVE, gh.mouseMove);
-		stage.addEventListener(MouseEvent.MOUSE_UP, gh.mouseUp);
-		stage.addEventListener(MouseEvent.MOUSE_WHEEL, gh.mouseWheel);
-		stage.addEventListener('rightClick', gh.rightMouseClick);
-		stage.addEventListener(KeyboardEvent.KEY_DOWN, runtime.keyDown);
-		stage.addEventListener(KeyboardEvent.KEY_UP, runtime.keyUp);
-		stage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown); // to handle escape key
-		stage.addEventListener(Event.ENTER_FRAME, step);
-		stage.addEventListener(Event.RESIZE, onResize);
-		
-		addEventListener(Event.DEACTIVATE, onPause);
-		addEventListener(Event.ACTIVATE, onResume);
-		
-		setEditMode(startInEditMode());
+        isShowingTextInputDialog = false;
 
-		// install project before calling fixLayout()
-		if (editMode) runtime.installNewProject();
-		else runtime.installEmptyProject();
-		
-		initCatSprite();
-		fixLayout();
-		TARGET::android {
-			connector = new AndroidConnector();
-		}
+        stage.align = StageAlign.TOP_LEFT;
+        stage.scaleMode = StageScaleMode.NO_SCALE;
+
+        stage.frameRate = 30;
+
+        Block.setFonts(10, 9, true, 0); // default font sizes
+        Block.MenuHandlerFunction = BlockMenus.BlockMenuHandler;
+        CursorTool.init(this);
+        app = this;
+
+        stagePane = new ScratchStage();
+        gh = new GestureHandler(this, (loaderInfo.parameters['inIE'] == 'true'));
+        initInterpreter();
+        initRuntime();
+        initExtensionManager();
+        Translator.initializeLanguageList();
+
+        playerBG = new Shape(); // create, but don't add
+        addParts();
+
+        stage.addEventListener(MouseEvent.MOUSE_DOWN, gh.mouseDown);
+        stage.addEventListener(MouseEvent.MOUSE_MOVE, gh.mouseMove);
+        stage.addEventListener(MouseEvent.MOUSE_UP, gh.mouseUp);
+        stage.addEventListener(MouseEvent.MOUSE_WHEEL, gh.mouseWheel);
+        stage.addEventListener('rightClick', gh.rightMouseClick);
+        stage.addEventListener(KeyboardEvent.KEY_DOWN, runtime.keyDown);
+        stage.addEventListener(KeyboardEvent.KEY_UP, runtime.keyUp);
+        stage.addEventListener(KeyboardEvent.KEY_DOWN, keyDown); // to handle escape key
+        stage.addEventListener(Event.ENTER_FRAME, step);
+        stage.addEventListener(Event.RESIZE, onResize);
+        TARGET::android {
+            addEventListener(Event.DEACTIVATE, onPause);
+            addEventListener(Event.ACTIVATE, onResume);
+        }
+        setEditMode(startInEditMode());
+
+        // install project before calling fixLayout()
+        if (editMode) runtime.installNewProject();
+        else runtime.installEmptyProject();
+
+        initCatSprite();
+        fixLayout();
+        TARGET::android {
+            connector = new AndroidConnector();
+        }
 
         TARGET::desktop {
             robotCommunicator = new DesktopRobotCommunicator(refreshAnalogs);
         }
-		
-		//Analyze.collectAssets(0, 119110);
-		//Analyze.checkProjects(56086, 64220);
-		//Analyze.countMissingAssets();
-		
-		// make stage small at startup
-		toggleSmallStage();
-	}
+
+        //Analyze.collectAssets(0, 119110);
+        //Analyze.checkProjects(56086, 64220);
+        //Analyze.countMissingAssets();
+
+        // make stage small at startup
+        toggleSmallStage();
+    }
 
 
     function refreshAnalogs(data:Array):void {
@@ -271,19 +272,20 @@ public class Scratch extends Sprite {
         }
     }
 
-	private function onResume(event:Event):void {
-        robotCommunicator.setActive(true);
-	}
-	
-	private function onPause(event:Event):void {
-        robotCommunicator.setActive(false);
-		runtime.resetAnalogs();
-		var projectFileName:String = projectName();
-		if (projectFileName.length == 0 || projectFileName == ' ') 
-			return;
-		saveCurrentProject();
-	}
-	
+    TARGET::android {
+        private function onResume(event:Event):void {
+            robotCommunicator.setActive(true);
+        }
+
+        private function onPause(event:Event):void {
+            robotCommunicator.setActive(false);
+            runtime.resetAnalogs();
+            var projectFileName:String = projectName();
+            if (projectFileName.length == 0 || projectFileName == ' ')
+                return;
+            saveCurrentProject();
+        }
+    }
 	public function setAnalogText(index:int, text:String):void {
 		scratchBoardPart.setAnalogText(index, text);
 	}
@@ -867,7 +869,12 @@ public class Scratch extends Sprite {
 
 	protected function addFileMenuItems(b:*, m:Menu):void {
 		m.addItem('Open', runtime.selectProjectFile);
-		m.addItem('Save', saveCurrentProject);
+        TARGET::android {
+            m.addItem('Save', saveCurrentProject);
+        }
+        TARGET::desktop {
+            m.addItem('Save', exportProjectToFile);
+        }
 		m.addItem('Save as', exportProjectToFile);
 		if (canUndoRevert()) {
 			m.addLine();
@@ -1088,7 +1095,12 @@ public class Scratch extends Sprite {
 		function proceedWithoutSaving():void { d.cancel(); postSaveAction() }
 		function save():void {
 			d.cancel();
-			saveCurrentProject(); // if this succeeds, saveNeeded will become false
+            TARGET::android {
+                saveCurrentProject(); // if this succeeds, saveNeeded will become false
+            }
+            TARGET::desktop {
+                exportProjectToFile();
+            }
 			saveNeeded = false;
 			if (!saveNeeded) {
 				postSaveAction();
@@ -1115,29 +1127,32 @@ public class Scratch extends Sprite {
 	*   @exportProjectToFile() is called and user will be forced to
 	*   pick a name for project.
 	*/
-	protected function saveCurrentProject():void {
-		function squeakSoundsConverted():void {
-			scriptsPane.saveScripts(false);
-			var zipData:ByteArray = projIO.encodeProjectAsZipFile(stagePane);
-			var projectFileName:String = projectName();
-			/*  Somewhere it is set to be one space, but we need an empty string
-			 *  name for empty project to determine whether we should
-			 *  save current project with an exiting name or pick a new one.
-			 */
-			if (projectFileName.length == 0 || projectFileName == ' ') {
-				exportProjectToFile();
-				return;
-			}
-			projectFileName = projectFileName + '.sb2';
-			writeBytesToFile(projectFileName, zipData);
-			setProjectName(projectFileName);
-		}
-		if (loadInProgress) {
-			return;
-		}
-		var projIO:ProjectIO = new ProjectIO(this);
-		projIO.convertSqueakSounds(stagePane, squeakSoundsConverted);
-	}
+    TARGET::android {
+        protected function saveCurrentProject():void {
+            function squeakSoundsConverted():void {
+                scriptsPane.saveScripts(false);
+                var zipData:ByteArray = projIO.encodeProjectAsZipFile(stagePane);
+                var projectFileName:String = projectName();
+                /*  Somewhere it is set to be one space, but we need an empty string
+                 *  name for empty project to determine whether we should
+                 *  save current project with an exiting name or pick a new one.
+                 */
+                if (projectFileName.length == 0 || projectFileName == ' ') {
+                    exportProjectToFile();
+                    return;
+                }
+                projectFileName = projectFileName + '.sb2';
+                writeBytesToFile(projectFileName, zipData);
+                setProjectName(projectFileName);
+            }
+
+            if (loadInProgress) {
+                return;
+            }
+            var projIO:ProjectIO = new ProjectIO(this);
+            projIO.convertSqueakSounds(stagePane, squeakSoundsConverted);
+        }
+    }
 
 	/*  This method shows picker dialog, where user enters project name.
 	 *  
@@ -1265,14 +1280,16 @@ public class Scratch extends Sprite {
 			projIO.convertSqueakSounds(stagePane, squeakSoundsConvertedDesktop);
 		}
 	}
-	
-	private static function writeBytesToFile(fileName:String, data:ByteArray):void { 
-		var outFile:File = File.userDirectory.resolvePath("scratch-projects");
-		outFile = outFile.resolvePath(fileName);
-		var outStream:FileStream = new FileStream(); 
-		outStream.open(outFile, FileMode.WRITE);
-		outStream.writeBytes(data, 0, data.length);
-		outStream.close();
+
+	TARGET::android {
+		private static function writeBytesToFile(fileName:String, data:ByteArray):void {
+			var outFile:File = File.userDirectory.resolvePath("scratch-projects");
+			outFile = outFile.resolvePath(fileName);
+			var outStream:FileStream = new FileStream();
+			outStream.open(outFile, FileMode.WRITE);
+			outStream.writeBytes(data, 0, data.length);
+			outStream.close();
+		}
 	}
 	
 	public static function fixFileName(s:String):String {
