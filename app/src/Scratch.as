@@ -727,20 +727,23 @@ public class Scratch extends Sprite {
 	}
 
 	public function fixLayout():void {
-		/*var w:int = stage.stageWidth;
-		var h:int = stage.stageHeight - 1; // fix to show bottom border...
-		w = Math.ceil(w / scaleX);
-		h = Math.ceil(h / scaleY);*/
-		
-		var w:int = 1280;
-		var h:int = 680;
-		if (stage.stageWidth < 1280) {
-			w = 1024;
-			h = 580;
-			ScratchObj.STAGEH = 360 * 3 / 4;
+		TARGET::desktop {
+			var w:int = stage.stageWidth;
+			var h:int = stage.stageHeight - 1; // fix to show bottom border...
+			w = Math.ceil(w / scaleX);
+			h = Math.ceil(h / scaleY);
 		}
-		scaleX = 1.0 * stage.stageWidth / w;
-		scaleY = 1.0 * stage.stageHeight / h;
+		TARGET::android {
+			var w:int = 1280;
+			var h:int = 680;
+			if (stage.stageWidth < 1280) {
+				w = 1024;
+				h = 580;
+				ScratchObj.STAGEH = 360 * 3 / 4;
+			}
+			scaleX = 1.0 * stage.stageWidth / w;
+			scaleY = 1.0 * stage.stageHeight / h;
+		}
 		updateLayout(w, h);
 	}
 
@@ -787,6 +790,11 @@ public class Scratch extends Sprite {
 		var restWidth:Number = stagePart.w;
 		var libraryPartHeight:Number = restHeight / 5 * 3 + 20 * (stageIsContracted ? 1 : 0);//remove add here
 		var scratchBoardPartHeight:Number = restHeight / 5 * 2 - 20 * (stageIsContracted ? 1 : 0);//remove sub here
+		TARGET::desktop {
+			if (scratchBoardPartHeight < 125) {
+				scratchBoardPartHeight = 125;
+			}
+		}
 		
 		scratchBoardPart.x = stagePart.x;
 		scratchBoardPart.y = stagePart.bottom() + 18; // + 18
